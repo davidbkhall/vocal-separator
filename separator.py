@@ -21,7 +21,22 @@ load_dotenv()
 
 console = Console()
 
-API_BASE_URL = "https://groovy.audioshake.ai"
+# Official Tasks API per https://developer.audioshake.ai/
+API_BASE_URL = "https://api.audioshake.ai"
+
+# Raised when the API returns 401 so the GUI/log can show a clear auth message
+AUTH_ERROR_MSG = (
+    "Authentication failed. Your API key may be invalid or expired. "
+    "Check your key in Settings and try again."
+)
+
+
+class AuthenticationError(Exception):
+    """Raised when Audioshake API returns 401 Unauthorized."""
+
+    def __init__(self) -> None:
+        super().__init__(AUTH_ERROR_MSG)
+
 
 VALID_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac", ".wma"}
 
@@ -44,9 +59,9 @@ def check_api_key() -> bool:
 
 
 def get_headers() -> dict:
-    """Return headers for API requests."""
+    """Return headers for API requests (x-api-key per AudioShake docs)."""
     key = get_api_key() or ""
-    return {"Authorization": f"Bearer {key}"}
+    return {"x-api-key": key}
 
 
 def is_valid_audio_file(file_path: Path) -> bool:
@@ -55,22 +70,25 @@ def is_valid_audio_file(file_path: Path) -> bool:
 
 
 def upload_file(file_path: Path, quiet: bool = False) -> str | None:
-    """Upload audio file and return asset ID."""
+    """Upload audio file via POST /assets and return asset ID."""
     if not quiet:
         console.print(f"[blue]📤 Uploading:[/blue] {file_path.name}")
 
-    url = f"{API_BASE_URL}/upload"
+    url = f"{API_BASE_URL}/assets"
 
     try:
         with open(file_path, "rb") as f:
             files = {"file": (file_path.name, f)}
             response = requests.post(url, headers=get_headers(), files=files, timeout=300)
 
+        if response.status_code == 401:
+            raise AuthenticationError()
         if response.status_code != 200:
             console.print(f"[red]❌ Upload failed ({response.status_code}):[/red] {response.text}")
             return None
 
-        asset_id = response.json().get("id")
+        data = response.json()
+        asset_id = data.get("id")
         if not quiet:
             console.print(f"[green]✅ Uploaded[/green] (Asset ID: {asset_id})")
         return cast(str | None, asset_id)
@@ -80,50 +98,81 @@ def upload_file(file_path: Path, quiet: bool = False) -> str | None:
         return None
 
 
-def create_job(
-    asset_id: str,
-    quiet: bool = False,
-    format: str = "vocals",
-    name: str = "vocal-separation",
-) -> str | None:
-    """Create vocal separation job and return job ID."""
-    if not quiet:
-        console.print("[blue]🎵 Starting vocal separation...[/blue]")
+def build_target(
+    model: str,
+    formats: list[str],
+    variant: str | None = None,
+    residual: bool = False,
+    language: str | None = None,
+) -> dict:
+    """Build a Tasks API target object (model + formats + optional variant/residual/language)."""
+    target: dict = {"model": model, "formats": formats}
+    if variant:
+        target["variant"] = variant
+    if residual:
+        target["residual"] = True
+    if language:
+        target["language"] = language
+    return target
 
-    url = f"{API_BASE_URL}/job"
-    payload = {
-        "assetId": asset_id,
-        "format": format,
-        "name": name,
-    }
+
+def create_task(
+    asset_id: str,
+    targets: list[dict],
+    quiet: bool = False,
+) -> str | None:
+    """Create a task via POST /tasks. Returns task ID."""
+    if not quiet:
+        console.print("[blue]🎵 Starting separation task...[/blue]")
+
+    url = f"{API_BASE_URL}/tasks"
+    payload = {"assetId": asset_id, "targets": targets}
 
     try:
-        response = requests.post(url, headers=get_headers(), json=payload, timeout=60)
+        response = requests.post(
+            url,
+            headers={**get_headers(), "Content-Type": "application/json"},
+            json=payload,
+            timeout=60,
+        )
 
+        if response.status_code == 401:
+            raise AuthenticationError()
         if response.status_code not in [200, 201]:
             console.print(
-                f"[red]❌ Job creation failed ({response.status_code}):[/red] {response.text}"
+                f"[red]❌ Task creation failed ({response.status_code}):[/red] {response.text}"
             )
             return None
 
-        job_id = response.json().get("id")
+        task_id = response.json().get("id")
         if not quiet:
-            console.print(f"[green]✅ Job started[/green] (Job ID: {job_id})")
-        return cast(str | None, job_id)
+            console.print(f"[green]✅ Task started[/green] (Task ID: {task_id})")
+        return cast(str | None, task_id)
 
     except requests.exceptions.RequestException as e:
-        console.print(f"[red]❌ Job creation error:[/red] {e}")
+        console.print(f"[red]❌ Task creation error:[/red] {e}")
         return None
 
 
+def _task_done(data: dict) -> tuple[bool, bool]:
+    """Return (all_completed, any_failed) from GET /tasks/{id} response."""
+    targets = data.get("targets") or []
+    if not targets:
+        return False, False
+    statuses = [t.get("status") for t in targets]
+    all_done = all(s == "completed" for s in statuses)
+    any_failed = any(s == "failed" for s in statuses)
+    return all_done, any_failed
+
+
 def wait_for_completion(
-    job_id: str,
+    task_id: str,
     poll_interval: int = 5,
     quiet: bool = False,
     cancel_check: Callable[[], bool] | None = None,
 ) -> dict | None:
-    """Poll until job completes. If cancel_check() returns True, abort and return None."""
-    url = f"{API_BASE_URL}/job/{job_id}"
+    """Poll GET /tasks/{id} until all targets complete. Return task data or None."""
+    url = f"{API_BASE_URL}/tasks/{task_id}"
 
     if quiet:
         while True:
@@ -131,16 +180,17 @@ def wait_for_completion(
                 if cancel_check and cancel_check():
                     return None
                 response = requests.get(url, headers=get_headers(), timeout=30)
+                if response.status_code == 401:
+                    raise AuthenticationError()
                 if response.status_code != 200:
                     return None
 
                 data = response.json()
-                status = data.get("status", "unknown")
-
-                if status == "completed":
-                    return cast(dict, data)
-                elif status == "failed":
+                all_done, any_failed = _task_done(data)
+                if any_failed:
                     return None
+                if all_done:
+                    return cast(dict, data)
 
                 time.sleep(poll_interval)
             except requests.exceptions.RequestException:
@@ -151,7 +201,7 @@ def wait_for_completion(
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
-            task = progress.add_task("⏳ Processing audio...", total=None)
+            prog_task = progress.add_task("⏳ Processing audio...", total=None)
 
             while True:
                 try:
@@ -159,20 +209,24 @@ def wait_for_completion(
                         return None
                     response = requests.get(url, headers=get_headers(), timeout=30)
 
+                    if response.status_code == 401:
+                        raise AuthenticationError()
                     if response.status_code != 200:
                         console.print(f"[red]❌ Status check failed:[/red] {response.text}")
                         return None
 
                     data = response.json()
-                    status = data.get("status", "unknown")
-
-                    if status == "completed":
-                        progress.update(task, description="[green]✅ Processing complete!")
-                        return cast(dict, data)
-                    elif status == "failed":
-                        error = data.get("error", "Unknown error")
-                        console.print(f"\n[red]❌ Job failed:[/red] {error}")
+                    all_done, any_failed = _task_done(data)
+                    if any_failed:
+                        for t in data.get("targets") or []:
+                            if t.get("status") == "failed":
+                                err = t.get("error", "Unknown error")
+                                console.print(f"\n[red]❌ Task failed:[/red] {err}")
+                                break
                         return None
+                    if all_done:
+                        progress.update(prog_task, description="[green]✅ Processing complete!")
+                        return cast(dict, data)
 
                     time.sleep(poll_interval)
 
@@ -182,12 +236,19 @@ def wait_for_completion(
 
 
 def download_stems(
-    job_data: dict, output_dir: Path, original_name: str, quiet: bool = False
+    task_data: dict, output_dir: Path, original_name: str, quiet: bool = False
 ) -> list[Path]:
-    """Download separated audio files."""
+    """Download output files from completed task (targets[].output[].link)."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    stems = job_data.get("outputAssets", [])
+    # Tasks API: each target has output: [ { name, link, format, ... } ]
+    stems: list[tuple[str, str]] = []
+    for target in task_data.get("targets") or []:
+        for out in target.get("output") or []:
+            name = out.get("name") or "output"
+            link = out.get("link")
+            if link:
+                stems.append((name, link))
 
     if not stems:
         if not quiet:
@@ -200,13 +261,7 @@ def download_stems(
     saved_files = []
     base_name = Path(original_name).stem
 
-    for stem in stems:
-        stem_name = stem.get("name", "output")
-        stem_url = stem.get("link") or stem.get("url")
-
-        if not stem_url:
-            continue
-
+    for stem_name, stem_url in stems:
         extension = Path(stem_url).suffix.split("?")[0] or ".wav"
         output_file = output_dir / f"{base_name}_{stem_name}{extension}"
 
@@ -236,12 +291,15 @@ def separate_file(
     output_dir: Path,
     quiet: bool = False,
     cancel_check: Callable[[], bool] | None = None,
-    format: str = "vocals",
-    name: str = "vocal-separation",
+    model: str = "vocals",
+    output_format: str = "wav",
+    variant: str | None = None,
+    residual: bool = False,
+    language: str | None = None,
 ) -> bool:
     """
-    Separate a single file. Returns True on success.
-    This is the core function used by both CLI and batch processing.
+    Separate a single file using the Tasks API. Returns True on success.
+    Target options: model, output_format, optional variant, residual, language.
     """
     if not input_file.exists():
         if not quiet:
@@ -257,15 +315,22 @@ def separate_file(
     if not asset_id:
         return False
 
-    job_id = create_job(asset_id, quiet=quiet, format=format, name=name)
-    if not job_id:
+    target = build_target(
+        model=model,
+        formats=[output_format],
+        variant=variant or None,
+        residual=residual,
+        language=language,
+    )
+    task_id = create_task(asset_id, [target], quiet=quiet)
+    if not task_id:
         return False
 
-    job_data = wait_for_completion(job_id, quiet=quiet, cancel_check=cancel_check)
-    if not job_data:
+    task_data = wait_for_completion(task_id, quiet=quiet, cancel_check=cancel_check)
+    if not task_data:
         return False
 
-    saved = download_stems(job_data, output_dir, input_file.name, quiet)
+    saved = download_stems(task_data, output_dir, input_file.name, quiet)
     return len(saved) > 0
 
 

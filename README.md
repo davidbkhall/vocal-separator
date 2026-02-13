@@ -82,7 +82,7 @@ python batch.py ./music -o ./vocals -w 4
 2. Run `./create_app.sh` to create **VocalSeparator.app**
 3. Double-click the app to open the GUI
 4. **Main tab:** Add files or a folder, choose output directory, then click **Start**. Use **Stop** to cancel. Progress and per-file status are shown.
-5. **Settings tab:** Enter your API key, optional Audioshake format/job name, and enable a log file if desired. Click **Save settings**.
+5. **Settings tab:** Enter your API key and optional task options (model, output format, variant, residual) per [AudioShake Tasks API](https://developer.audioshake.ai/). Enable a log file if desired. Click **Save settings**.
 6. Move the `.app` to Applications or keep it in the project folder (it uses this project’s Python and `.env`)
 
 ### Building a standalone macOS app (bundle)

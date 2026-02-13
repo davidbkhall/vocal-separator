@@ -14,7 +14,13 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 from rich.table import Table
 
-from separator import VALID_EXTENSIONS, check_api_key, is_valid_audio_file, separate_file
+from separator import (
+    VALID_EXTENSIONS,
+    AuthenticationError,
+    check_api_key,
+    is_valid_audio_file,
+    separate_file,
+)
 
 load_dotenv()
 
@@ -40,14 +46,31 @@ def find_audio_files(input_path: Path, recursive: bool = False) -> list[Path]:
         return sorted(set(files))
 
 
-def process_file(file_path: Path, output_dir: Path) -> tuple[Path, bool, str]:
+def process_file(
+    file_path: Path,
+    output_dir: Path,
+    model: str = "vocals",
+    output_format: str = "wav",
+    variant: str | None = None,
+    residual: bool = False,
+) -> tuple[Path, bool, str]:
     """Process a single file. Returns (path, success, message)."""
     try:
-        success = separate_file(file_path, output_dir, quiet=True)
+        success = separate_file(
+            file_path,
+            output_dir,
+            quiet=True,
+            model=model,
+            output_format=output_format,
+            variant=variant,
+            residual=residual,
+        )
         if success:
             return (file_path, True, "✅ Success")
         else:
             return (file_path, False, "❌ Failed")
+    except AuthenticationError:
+        raise
     except Exception as e:
         return (file_path, False, f"❌ Error: {str(e)[:50]}")
 
@@ -57,16 +80,31 @@ def batch_process(
     output_dir: Path,
     recursive: bool = False,
     max_workers: int = 2,
+    model: str = "vocals",
+    output_format: str = "wav",
+    variant: str | None = None,
+    residual: bool = False,
+    files: list[Path] | None = None,
 ):
-    """Process multiple files with progress tracking."""
+    """Process multiple files with progress tracking.
+    If files is provided, only those paths are processed; otherwise files are
+    discovered from input_path via find_audio_files(input_path, recursive).
+    """
     console.print("\n[bold cyan]🎧 Audioshake Batch Voice Separator[/bold cyan]\n")
 
     if not check_api_key():
         sys.exit(1)
 
-    # Find files
-    console.print("[blue]🔍 Scanning for audio files...[/blue]")
-    files = find_audio_files(input_path, recursive)
+    # Find or use provided files
+    if files is not None:
+        files = [p for p in files if p.is_file() and is_valid_audio_file(p)]
+        if not files:
+            console.print("[yellow]⚠️ No valid audio files in the given list.[/yellow]")
+            console.print(f"   Supported formats: {', '.join(VALID_EXTENSIONS)}")
+            sys.exit(1)
+    else:
+        console.print("[blue]🔍 Scanning for audio files...[/blue]")
+        files = find_audio_files(input_path, recursive)
 
     if not files:
         console.print("[yellow]⚠️ No audio files found.[/yellow]")
@@ -99,19 +137,31 @@ def batch_process(
         task = progress.add_task("Processing files...", total=len(files))
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(process_file, f, output_dir): f for f in files}
+            futures = {
+                executor.submit(
+                    process_file, f, output_dir, model, output_format, variant, residual
+                ): f
+                for f in files
+            }
 
-            for future in as_completed(futures):
-                result = future.result()
-                results.append(result)
-                progress.advance(task)
+            try:
+                for future in as_completed(futures):
+                    result = future.result()
+                    results.append(result)
+                    progress.advance(task)
 
-                # Show inline status
-                file_path, success, message = result
-                if success:
-                    progress.console.print(f"   [green]✅[/green] {file_path.name}")
-                else:
-                    progress.console.print(f"   [red]❌[/red] {file_path.name}: {message}")
+                    # Show inline status
+                    file_path, success, message = result
+                    if success:
+                        progress.console.print(f"   [green]✅[/green] {file_path.name}")
+                    else:
+                        progress.console.print(f"   [red]❌[/red] {file_path.name}: {message}")
+            except AuthenticationError as e:
+                console.print(f"\n[red]❌ {e}[/red]")
+                console.print(
+                    "[yellow]Stopping batch — verify your API key and try again.[/yellow]\n"
+                )
+                sys.exit(1)
 
     # Summary
     console.print("\n" + "─" * 50)
@@ -179,16 +229,66 @@ Examples:
         help="Number of parallel jobs (default: 2)",
     )
 
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        default="vocals",
+        help="Target model (e.g. vocals, instrumental, drums) (default: vocals)",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        default="wav",
+        choices=["wav", "mp3", "flac", "aiff"],
+        help="Output format (default: wav)",
+    )
+
+    parser.add_argument(
+        "--variant",
+        type=str,
+        default=None,
+        help="Optional variant (e.g. high_quality for vocals/instrumental)",
+    )
+
+    parser.add_argument(
+        "--residual",
+        action="store_true",
+        help="Include residual stem when supported",
+    )
+
     args = parser.parse_args()
 
-    # Handle multiple input files
+    # Handle multiple inputs: process only the specified files (not the whole directory)
     if len(args.input) > 1:
-        # Multiple files specified directly
-        for input_file in args.input:
-            if input_file.is_file():
-                batch_process(input_file.parent, args.output, False, args.workers)
+        specified_files = [p for p in args.input if p.is_file() and is_valid_audio_file(p)]
+        if not specified_files:
+            console.print("[yellow]⚠️ No valid audio files specified.[/yellow]")
+            sys.exit(1)
+        batch_process(
+            args.input[0],  # only used when files is None
+            args.output,
+            False,
+            args.workers,
+            args.model,
+            args.format,
+            args.variant,
+            args.residual,
+            files=specified_files,
+        )
     else:
-        batch_process(args.input[0], args.output, args.recursive, args.workers)
+        batch_process(
+            args.input[0],
+            args.output,
+            args.recursive,
+            args.workers,
+            args.model,
+            args.format,
+            args.variant,
+            args.residual,
+        )
 
 
 if __name__ == "__main__":

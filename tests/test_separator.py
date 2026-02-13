@@ -11,7 +11,7 @@ import responses
 from separator import (
     API_BASE_URL,
     check_api_key,
-    create_job,
+    create_task,
     download_stems,
     get_headers,
     is_valid_audio_file,
@@ -61,11 +61,11 @@ class TestValidation:
             assert check_api_key() is True
 
     def test_get_headers(self):
-        """Test that headers include authorization."""
+        """Test that headers include x-api-key per AudioShake docs."""
         with patch("separator.get_api_key", return_value="test_key_123"):
             headers = get_headers()
-            assert "Authorization" in headers
-            assert headers["Authorization"] == "Bearer test_key_123"
+            assert "x-api-key" in headers
+            assert headers["x-api-key"] == "test_key_123"
 
 
 class TestUpload:
@@ -78,10 +78,10 @@ class TestUpload:
         test_file = tmp_path / "test.mp3"
         test_file.write_bytes(b"fake audio content")
 
-        # Mock the API response
+        # Mock the API response (POST /assets per AudioShake docs)
         responses.add(
             responses.POST,
-            f"{API_BASE_URL}/upload",
+            f"{API_BASE_URL}/assets",
             json={"id": "asset_123"},
             status=200,
         )
@@ -93,13 +93,13 @@ class TestUpload:
 
     @responses.activate
     def test_upload_file_failure(self, tmp_path):
-        """Test failed file upload."""
+        """Test failed file upload (POST /assets returns 400)."""
         test_file = tmp_path / "test.mp3"
         test_file.write_bytes(b"fake audio content")
 
         responses.add(
             responses.POST,
-            f"{API_BASE_URL}/upload",
+            f"{API_BASE_URL}/assets",
             json={"error": "Invalid file"},
             status=400,
         )
@@ -110,71 +110,86 @@ class TestUpload:
         assert asset_id is None
 
 
-class TestJobCreation:
-    """Tests for job creation."""
+class TestTaskCreation:
+    """Tests for task creation (POST /tasks)."""
 
     @responses.activate
-    def test_create_job_success(self):
-        """Test successful job creation."""
+    def test_create_task_success(self):
+        """Test successful task creation."""
         responses.add(
             responses.POST,
-            f"{API_BASE_URL}/job",
-            json={"id": "job_456"},
+            f"{API_BASE_URL}/tasks",
+            json={"id": "task_456"},
             status=201,
         )
 
         with patch("separator.get_api_key", return_value="test_key"):
-            job_id = create_job("asset_123", quiet=True)
+            task_id = create_task(
+                "asset_123", [{"model": "vocals", "formats": ["wav"]}], quiet=True
+            )
 
-        assert job_id == "job_456"
+        assert task_id == "task_456"
 
     @responses.activate
-    def test_create_job_failure(self):
-        """Test failed job creation."""
+    def test_create_task_failure(self):
+        """Test failed task creation."""
         responses.add(
             responses.POST,
-            f"{API_BASE_URL}/job",
+            f"{API_BASE_URL}/tasks",
             json={"error": "Invalid asset"},
             status=400,
         )
 
         with patch("separator.get_api_key", return_value="test_key"):
-            job_id = create_job("invalid_asset", quiet=True)
+            task_id = create_task(
+                "invalid_asset", [{"model": "vocals", "formats": ["wav"]}], quiet=True
+            )
 
-        assert job_id is None
+        assert task_id is None
 
 
-class TestJobPolling:
-    """Tests for job status polling."""
+class TestTaskPolling:
+    """Tests for task status polling (GET /tasks/{id})."""
 
     @responses.activate
     def test_wait_for_completion_success(self):
-        """Test successful job completion."""
+        """Test successful task completion (all targets completed)."""
         responses.add(
             responses.GET,
-            f"{API_BASE_URL}/job/job_123",
-            json={"status": "completed", "outputAssets": []},
+            f"{API_BASE_URL}/tasks/task_123",
+            json={
+                "id": "task_123",
+                "targets": [
+                    {
+                        "status": "completed",
+                        "output": [{"name": "vocals", "link": "https://example.com/vocals.wav"}],
+                    }
+                ],
+            },
             status=200,
         )
 
         with patch("separator.get_api_key", return_value="test_key"):
-            result = wait_for_completion("job_123", poll_interval=0, quiet=True)
+            result = wait_for_completion("task_123", poll_interval=0, quiet=True)
 
         assert result is not None
-        assert result["status"] == "completed"
+        assert result["targets"][0]["status"] == "completed"
 
     @responses.activate
     def test_wait_for_completion_failure(self):
-        """Test failed job."""
+        """Test failed task (target status failed)."""
         responses.add(
             responses.GET,
-            f"{API_BASE_URL}/job/job_123",
-            json={"status": "failed", "error": "Processing error"},
+            f"{API_BASE_URL}/tasks/task_123",
+            json={
+                "id": "task_123",
+                "targets": [{"status": "failed", "error": "Processing error"}],
+            },
             status=200,
         )
 
         with patch("separator.get_api_key", return_value="test_key"):
-            result = wait_for_completion("job_123", poll_interval=0, quiet=True)
+            result = wait_for_completion("task_123", poll_interval=0, quiet=True)
 
         assert result is None
 
@@ -195,19 +210,21 @@ class TestDownload:
             status=200,
         )
 
-        job_data = {"outputAssets": [{"name": "vocals", "link": "https://example.com/vocals.wav"}]}
+        task_data = {
+            "targets": [{"output": [{"name": "vocals", "link": "https://example.com/vocals.wav"}]}]
+        }
 
-        saved = download_stems(job_data, output_dir, "song.mp3", quiet=True)
+        saved = download_stems(task_data, output_dir, "song.mp3", quiet=True)
 
         assert len(saved) == 1
         assert saved[0].exists()
         assert "vocals" in saved[0].name
 
     def test_download_stems_empty(self, tmp_path):
-        """Test handling of empty output assets."""
+        """Test handling of empty output (no targets or empty output)."""
         output_dir = tmp_path / "output"
-        job_data = {"outputAssets": []}
+        task_data = {"targets": []}
 
-        saved = download_stems(job_data, output_dir, "song.mp3", quiet=True)
+        saved = download_stems(task_data, output_dir, "song.mp3", quiet=True)
 
         assert len(saved) == 0

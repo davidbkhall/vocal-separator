@@ -29,6 +29,7 @@ load_dotenv(SCRIPT_DIR / ".env")
 
 from separator import (  # noqa: E402 (load_dotenv must run first)
     VALID_EXTENSIONS,
+    AuthenticationError,
     check_api_key,
     is_valid_audio_file,
     separate_file,
@@ -43,13 +44,42 @@ def ensure_log_dir():
     return LOG_DIR
 
 
+# Target options per https://developer.audioshake.ai/ (Tasks API)
+DEFAULT_MODEL = "vocals"
+DEFAULT_OUTPUT_FORMAT = "wav"
+MODEL_CHOICES = [
+    "vocals",
+    "vocals_lead",
+    "vocals_backing",
+    "instrumental",
+    "drums",
+    "bass",
+    "guitar",
+    "guitar_electric",
+    "guitar_acoustic",
+    "piano",
+    "keys",
+    "strings",
+    "wind",
+    "other",
+    "dialogue",
+    "effects",
+    "music_fx",
+    "transcription",
+]
+OUTPUT_FORMAT_CHOICES = ["wav", "mp3", "flac", "aiff"]
+VARIANT_CHOICES = ["", "high_quality", "two_speaker", "n_speaker"]
+
+
 def load_config() -> dict:
     """Load GUI config (API key stored in .env; rest in gui_config.json)."""
     api_key = os.getenv("AUDIOSHAKE_API_KEY", "")
     data: dict = {
         "api_key": api_key,
-        "format": "vocals",
-        "job_name": "vocal-separation",
+        "model": DEFAULT_MODEL,
+        "output_format": DEFAULT_OUTPUT_FORMAT,
+        "variant": "",
+        "residual": False,
         "log_enabled": False,
         "log_path": str(ensure_log_dir() / "vocal_separator.log"),
     }
@@ -58,13 +88,22 @@ def load_config() -> dict:
             with open(CONFIG_PATH, encoding="utf-8") as f:
                 saved = json.load(f)
             data.update({k: v for k, v in saved.items() if k != "api_key"})
+            # Backfill from legacy keys
+            if "format" in saved and "model" not in saved:
+                data["model"] = saved.get("format", DEFAULT_MODEL)
         except (json.JSONDecodeError, OSError):
             pass
     return data
 
 
 def save_config(
-    api_key: str, format_val: str, job_name: str, log_enabled: bool, log_path: str
+    api_key: str,
+    model: str,
+    output_format: str,
+    variant: str,
+    residual: bool,
+    log_enabled: bool,
+    log_path: str,
 ) -> None:
     """Save API key to .env and other settings to gui_config.json."""
     env_path = SCRIPT_DIR / ".env"
@@ -82,8 +121,10 @@ def save_config(
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(
             {
-                "format": format_val,
-                "job_name": job_name,
+                "model": model,
+                "output_format": output_format,
+                "variant": variant,
+                "residual": residual,
                 "log_enabled": log_enabled,
                 "log_path": log_path,
             },
@@ -128,13 +169,17 @@ def run_batch(
     output_dir: Path,
     cancel_event: threading.Event,
     progress_queue: ProgressQueue,
-    format_val: str,
-    job_name: str,
+    model: str,
+    output_format: str,
+    variant: str,
+    residual: bool,
     log_path: str | None,
     log_enabled: bool,
 ) -> None:
     """Worker: process files one by one, post progress, respect cancel."""
     total = len(files)
+    succeeded = 0
+    errors: list[tuple[str, str]] = []  # (filename, message)
     for i, path in enumerate(files):
         if cancel_event.is_set():
             progress_queue.put("cancelled", index=i, total=total)
@@ -146,29 +191,66 @@ def run_batch(
                 output_dir,
                 quiet=True,
                 cancel_check=cancel_event.is_set,
-                format=format_val,
-                name=job_name,
+                model=model,
+                output_format=output_format,
+                variant=variant.strip() or None,
+                residual=residual,
             )
             if cancel_event.is_set():
                 progress_queue.put("cancelled", index=i, total=total)
                 return
-            status = "Success" if success else "Failed"
+            if success:
+                succeeded += 1
+                status = "Success"
+            else:
+                status = "Failed"
+                errors.append((path.name, "Processing failed"))
             progress_queue.put("done_file", index=i, total=total, filename=path.name, status=status)
             if log_enabled and log_path:
                 with open(log_path, "a", encoding="utf-8") as f:
                     f.write(f"{path.name}\t{status}\n")
-        except Exception as e:
+        except AuthenticationError as e:
+            msg = str(e)
             progress_queue.put(
                 "done_file",
                 index=i,
                 total=total,
                 filename=path.name,
-                status=f"Error: {e!s}",
+                status=msg,
             )
+            errors.append((path.name, msg))
             if log_enabled and log_path:
                 with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(f"{path.name}\tError: {e}\n")
-    progress_queue.put("finished", total=total)
+                    f.write(f"{path.name}\t{msg}\n")
+            progress_queue.put(
+                "auth_failed",
+                total=total,
+                succeeded=succeeded,
+                failed=len(errors),
+                errors=errors,
+                message=msg,
+            )
+            return
+        except Exception as e:
+            msg = f"Error: {e!s}"
+            progress_queue.put(
+                "done_file",
+                index=i,
+                total=total,
+                filename=path.name,
+                status=msg,
+            )
+            errors.append((path.name, msg))
+            if log_enabled and log_path:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(f"{path.name}\t{msg}\n")
+    progress_queue.put(
+        "finished",
+        total=total,
+        succeeded=succeeded,
+        failed=len(errors),
+        errors=errors,
+    )
 
 
 class VocalSeparatorApp:
@@ -287,18 +369,43 @@ class VocalSeparatorApp:
         )
         row += 1
 
-        ttk.Label(sett, text="Format").grid(row=row, column=0, sticky=tk.W)
-        self.format_var = tk.StringVar(value=self.config.get("format", "vocals"))
-        ttk.Entry(sett, textvariable=self.format_var, width=30).grid(
-            row=row, column=1, sticky=tk.W, padx=(8, 0), pady=4
+        ttk.Label(sett, text="Model (target)").grid(row=row, column=0, sticky=tk.W)
+        self.model_var = tk.StringVar(value=self.config.get("model", DEFAULT_MODEL))
+        model_combo = ttk.Combobox(
+            sett, textvariable=self.model_var, values=MODEL_CHOICES, width=28, state="readonly"
         )
-        ttk.Label(sett, text="(e.g. vocals)").grid(row=row, column=2, sticky=tk.W, padx=(8, 0))
+        model_combo.grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=4)
+        ttk.Label(sett, text="e.g. vocals, instrumental").grid(
+            row=row, column=2, sticky=tk.W, padx=(8, 0)
+        )
         row += 1
 
-        ttk.Label(sett, text="Job name").grid(row=row, column=0, sticky=tk.W)
-        self.job_name_var = tk.StringVar(value=self.config.get("job_name", "vocal-separation"))
-        ttk.Entry(sett, textvariable=self.job_name_var, width=30).grid(
-            row=row, column=1, sticky=tk.W, padx=(8, 0), pady=4
+        ttk.Label(sett, text="Output format").grid(row=row, column=0, sticky=tk.W)
+        self.output_format_var = tk.StringVar(
+            value=self.config.get("output_format", DEFAULT_OUTPUT_FORMAT)
+        )
+        ttk.Combobox(
+            sett,
+            textvariable=self.output_format_var,
+            values=OUTPUT_FORMAT_CHOICES,
+            width=10,
+            state="readonly",
+        ).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=4)
+        row += 1
+
+        ttk.Label(sett, text="Variant").grid(row=row, column=0, sticky=tk.W)
+        self.variant_var = tk.StringVar(value=self.config.get("variant", ""))
+        ttk.Combobox(
+            sett, textvariable=self.variant_var, values=VARIANT_CHOICES, width=14, state="readonly"
+        ).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=4)
+        ttk.Label(sett, text="optional, e.g. high_quality").grid(
+            row=row, column=2, sticky=tk.W, padx=(8, 0)
+        )
+        row += 1
+
+        self.residual_var = tk.BooleanVar(value=self.config.get("residual", False))
+        ttk.Checkbutton(sett, text="Include residual stem", variable=self.residual_var).grid(
+            row=row, column=0, columnspan=2, sticky=tk.W, pady=4
         )
         row += 1
 
@@ -391,8 +498,10 @@ class VocalSeparatorApp:
             return
         save_config(
             api_key,
-            self.format_var.get().strip() or "vocals",
-            self.job_name_var.get().strip() or "vocal-separation",
+            self.model_var.get().strip() or DEFAULT_MODEL,
+            self.output_format_var.get().strip() or DEFAULT_OUTPUT_FORMAT,
+            self.variant_var.get().strip(),
+            self.residual_var.get(),
             self.log_enabled_var.get(),
             self.log_path_var.get().strip() or str(ensure_log_dir() / "vocal_separator.log"),
         )
@@ -437,8 +546,10 @@ class VocalSeparatorApp:
                 output_dir,
                 self.cancel_event,
                 self.progress_queue,
-                self.format_var.get().strip() or "vocals",
-                self.job_name_var.get().strip() or "vocal-separation",
+                self.model_var.get().strip() or DEFAULT_MODEL,
+                self.output_format_var.get().strip() or DEFAULT_OUTPUT_FORMAT,
+                self.variant_var.get().strip(),
+                self.residual_var.get(),
                 log_path,
                 self.log_enabled_var.get(),
             ),
@@ -477,8 +588,33 @@ class VocalSeparatorApp:
                 self.stop_btn.config(state=tk.DISABLED)
                 done = True
                 break
+            elif kind == "auth_failed":
+                self.status_var.set("Stopped — authentication failed. Check Settings.")
+                messagebox.showerror(
+                    "Authentication failed",
+                    data.get("message", "Your API key may be invalid. Check Settings."),
+                )
+                self.start_btn.config(state=tk.NORMAL)
+                self.stop_btn.config(state=tk.DISABLED)
+                done = True
+                break
             elif kind == "finished":
-                self.status_var.set(f"Finished — {data['total']} file(s) processed")
+                total_n = data.get("total", 0)
+                succeeded_n = data.get("succeeded", total_n)
+                failed_n = data.get("failed", 0)
+                errors_list = data.get("errors") or []
+                if failed_n:
+                    self.status_var.set(f"Finished — {succeeded_n} succeeded, {failed_n} failed")
+                    # Show error details so the user can't miss them
+                    lines = [f"• {name}: {msg}" for name, msg in errors_list[:10]]
+                    if len(errors_list) > 10:
+                        lines.append(f"… and {len(errors_list) - 10} more")
+                    messagebox.showwarning(
+                        "Processing errors",
+                        f"{failed_n} file(s) had errors:\n\n" + "\n".join(lines),
+                    )
+                else:
+                    self.status_var.set(f"Finished — {total_n} file(s) processed")
                 self.start_btn.config(state=tk.NORMAL)
                 self.stop_btn.config(state=tk.DISABLED)
                 done = True

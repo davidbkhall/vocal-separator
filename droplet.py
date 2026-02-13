@@ -69,7 +69,16 @@ def main():
     # Process directories with batch
     for directory in directories:
         console.print(f"\n[blue]Processing folder:[/blue] {directory.name}")
-        batch_process(directory, output_dir, recursive=True, max_workers=2)
+        batch_process(
+            directory,
+            output_dir,
+            recursive=True,
+            max_workers=2,
+            model="vocals",
+            output_format="wav",
+            variant=None,
+            residual=False,
+        )
 
     # Process individual files
     if audio_files:
