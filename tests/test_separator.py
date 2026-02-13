@@ -217,4 +217,4 @@ class TestDownload:
 
         saved = download_stems(job_data, output_dir, "song.mp3", quiet=True)
 
-        assert len(saved) == 0# Tests package
+        assert len(saved) == 0
