@@ -22,14 +22,18 @@ load_dotenv()
 console = Console()
 
 API_BASE_URL = "https://groovy.audioshake.ai"
-API_KEY = os.getenv("AUDIOSHAKE_API_KEY")
 
 VALID_EXTENSIONS = {".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aac", ".wma"}
 
 
+def get_api_key() -> str | None:
+    """Return current API key from environment (so GUI save updates take effect)."""
+    return os.getenv("AUDIOSHAKE_API_KEY")
+
+
 def check_api_key() -> bool:
     """Verify API key is configured."""
-    if not API_KEY:
+    if not get_api_key():
         console.print("\n[red]❌ AUDIOSHAKE_API_KEY not found![/red]\n")
         console.print("To get started:")
         console.print("  1. Get your API key from [link]https://www.audioshake.ai[/link]")
@@ -41,7 +45,8 @@ def check_api_key() -> bool:
 
 def get_headers() -> dict:
     """Return headers for API requests."""
-    return {"Authorization": f"Bearer {API_KEY}"}
+    key = get_api_key() or ""
+    return {"Authorization": f"Bearer {key}"}
 
 
 def is_valid_audio_file(file_path: Path) -> bool:

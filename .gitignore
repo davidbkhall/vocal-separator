@@ -21,6 +21,7 @@ ENV/
 dist/
 build/
 .eggs/
+assets/icon.iconset/
 
 # Output files
 output/

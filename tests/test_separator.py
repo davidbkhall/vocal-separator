@@ -53,17 +53,16 @@ class TestValidation:
     def test_check_api_key_missing(self):
         """Test that missing API key returns False."""
         with patch.dict(os.environ, {}, clear=True):
-            with patch("separator.API_KEY", None):
-                assert check_api_key() is False
+            assert check_api_key() is False
 
     def test_check_api_key_present(self):
         """Test that present API key returns True."""
-        with patch("separator.API_KEY", "test_key_123"):
+        with patch("separator.get_api_key", return_value="test_key_123"):
             assert check_api_key() is True
 
     def test_get_headers(self):
         """Test that headers include authorization."""
-        with patch("separator.API_KEY", "test_key_123"):
+        with patch("separator.get_api_key", return_value="test_key_123"):
             headers = get_headers()
             assert "Authorization" in headers
             assert headers["Authorization"] == "Bearer test_key_123"
@@ -87,7 +86,7 @@ class TestUpload:
             status=200,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             asset_id = upload_file(test_file, quiet=True)
 
         assert asset_id == "asset_123"
@@ -105,7 +104,7 @@ class TestUpload:
             status=400,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             asset_id = upload_file(test_file, quiet=True)
 
         assert asset_id is None
@@ -124,7 +123,7 @@ class TestJobCreation:
             status=201,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             job_id = create_job("asset_123", quiet=True)
 
         assert job_id == "job_456"
@@ -139,7 +138,7 @@ class TestJobCreation:
             status=400,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             job_id = create_job("invalid_asset", quiet=True)
 
         assert job_id is None
@@ -158,7 +157,7 @@ class TestJobPolling:
             status=200,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             result = wait_for_completion("job_123", poll_interval=0, quiet=True)
 
         assert result is not None
@@ -174,7 +173,7 @@ class TestJobPolling:
             status=200,
         )
 
-        with patch("separator.API_KEY", "test_key"):
+        with patch("separator.get_api_key", return_value="test_key"):
             result = wait_for_completion("job_123", poll_interval=0, quiet=True)
 
         assert result is None

@@ -14,7 +14,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-# Load .env before importing separator (so API_KEY is set)
+# Load .env before importing separator (so API key is in environment)
 from dotenv import load_dotenv
 
 # When bundled (py2app or PyInstaller), use Application Support so config is writable

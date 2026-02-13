@@ -12,6 +12,8 @@ For development (alias mode, uses your env; faster):
   python setup.py py2app -A
 """
 
+import os
+
 from setuptools import setup
 
 APP = ["app_gui.py"]
@@ -19,7 +21,7 @@ OPTIONS = {
     "argv_emulation": True,  # Dropped files are passed as sys.argv
     "packages": ["requests", "urllib3", "certifi", "charset_normalizer", "idna"],
     "includes": ["dotenv", "rich", "separator"],
-    "iconfile": None,  # Set to "icon.icns" if you add one
+    "iconfile": "assets/icon.icns" if os.path.isfile("assets/icon.icns") else None,
     "plist": {
         "CFBundleName": "VocalSeparator",
         "CFBundleDisplayName": "Vocal Separator",

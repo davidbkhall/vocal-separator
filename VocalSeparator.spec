@@ -1,10 +1,14 @@
 # PyInstaller spec for Vocal Separator macOS .app
 # Build: pyinstaller VocalSeparator.spec
 # Output: dist/VocalSeparator.app
+# Icon: run ./build_icon.sh to create assets/icon.icns from assets/icon.png
 
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+
 block_cipher = None
+icon_path = "assets/icon.icns" if os.path.isfile("assets/icon.icns") else None
 
 a = Analysis(
     ["app_gui.py"],
@@ -55,6 +59,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=icon_path,  # .icns for macOS .app (create with ./build_icon.sh)
 )
 
 # macOS .app bundle (built when console=False on macOS)

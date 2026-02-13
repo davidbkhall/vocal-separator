@@ -104,6 +104,15 @@ pyinstaller VocalSeparator.spec
 
 The app is created at **`dist/VocalSeparator.app`**. Move it to Applications or share it. On first run, settings and API key are stored in **`~/Library/Application Support/VocalSeparator/`**.
 
+**App icon:** The repo includes `assets/icon.png`. To use it as the .app icon, create a macOS icon set and build the bundle:
+
+```bash
+./build_icon.sh   # creates assets/icon.icns from assets/icon.png
+pyinstaller VocalSeparator.spec
+```
+
+If `build_icon.sh` fails (e.g. `iconutil` “Invalid Iconset”), create `assets/icon.icns` another way (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns) or Xcode) and run PyInstaller again.
+
 **Requirements:** macOS, Python with tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
 
 #### Option B: py2app
