@@ -89,29 +89,30 @@ python batch.py ./music -o ./vocals -w 4
 
 To build a **self-contained** `.app` that includes Python and all dependencies (so others can run it without installing Python or pip packages):
 
-1. Use a virtual environment and the **same Python** for install and build (avoids wrong interpreter and missing packages):
+1. **Use Python 3.12 or 3.13** — py2app does not support Python 3.14 yet (`pkg_resources` / `importlib.resources` changes). Install if needed: `brew install python@3.12`.
+2. Create a venv with that Python and install deps:
    ```bash
    cd audioshake-separator
-   python3 -m venv venv
+   python3.12 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
    pip install py2app
    ```
-2. Build the bundle (use the venv’s `python` so it matches the env where you installed packages):
+3. Build the bundle:
    ```bash
    python setup.py py2app
    ```
-3. The app is created at **`dist/VocalSeparator.app`**. You can move it to Applications or share it.
-4. On first run, the bundled app stores settings and API key in **`~/Library/Application Support/VocalSeparator/`** (create that folder and add a `.env` with your API key there if you pre-configure).
+4. The app is created at **`dist/VocalSeparator.app`**. You can move it to Applications or share it.
+5. On first run, the bundled app stores settings and API key in **`~/Library/Application Support/VocalSeparator/`** (create that folder and add a `.env` with your API key there if you pre-configure).
 
 **Development build** (faster; uses your current Python and installed packages, no copy of dependencies):
    ```bash
    python setup.py py2app -A
    ```
 
-**Requirements:** Build on macOS with a Python that has tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
+**Requirements:** Build on macOS with a Python that has tkinter (e.g. `brew install python-tk@3.12` for Python 3.12).
 
-**If the build fails:** Ensure the same Python runs the build as the one where you ran `pip install`. If your shell’s `python` points to another interpreter (e.g. a different corporate Python), use the venv as above, or run explicitly: `python3.11 setup.py py2app` (match the version from `pip --version`). A “macOS 15 (1507) or later required”–style abort often comes from a different Python build; using Homebrew Python in a venv usually avoids it.
+**If the build fails:** Use Python 3.12 or 3.13 for the venv and build (see step 1). If you see “No module named 'pkg_resources'” or “cannot import name '_files' from 'importlib.resources'”, you are on Python 3.14 — recreate the venv with `python3.12 -m venv venv`. If your shell’s `python` points to another interpreter, use the venv or run e.g. `python3.12 setup.py py2app`.
 
 ---
 
