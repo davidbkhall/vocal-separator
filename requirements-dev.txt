@@ -16,4 +16,5 @@ mypy>=1.8.0
 types-requests>=2.31.0
 
 # macOS app bundle (optional)
+pyinstaller>=6.0.0
 py2app>=0.28.0

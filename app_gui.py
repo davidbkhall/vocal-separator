@@ -17,7 +17,7 @@ from tkinter import filedialog, messagebox, ttk
 # Load .env before importing separator (so API_KEY is set)
 from dotenv import load_dotenv
 
-# When bundled (py2app), use Application Support so config is writable
+# When bundled (py2app or PyInstaller), use Application Support so config is writable
 if getattr(sys, "frozen", False):
     _app_support = Path.home() / "Library" / "Application Support" / "VocalSeparator"
     _app_support.mkdir(parents=True, exist_ok=True)

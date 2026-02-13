@@ -87,32 +87,36 @@ python batch.py ./music -o ./vocals -w 4
 
 ### Building a standalone macOS app (bundle)
 
-To build a **self-contained** `.app` that includes Python and all dependencies (so others can run it without installing Python or pip packages):
+To build a **self-contained** `.app` that includes Python and all dependencies:
 
-1. **Use Python 3.12 or 3.13** — py2app does not support Python 3.14 yet (`pkg_resources` / `importlib.resources` changes). Install if needed: `brew install python@3.12`.
-2. Create a venv with that Python and install deps:
-   ```bash
-   cd audioshake-separator
-   python3.12 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   pip install py2app
-   ```
-3. Build the bundle:
-   ```bash
-   python setup.py py2app
-   ```
-4. The app is created at **`dist/VocalSeparator.app`**. You can move it to Applications or share it.
-5. On first run, the bundled app stores settings and API key in **`~/Library/Application Support/VocalSeparator/`** (create that folder and add a `.env` with your API key there if you pre-configure).
+#### Option A: PyInstaller (recommended)
 
-**Development build** (faster; uses your current Python and installed packages, no copy of dependencies):
-   ```bash
-   python setup.py py2app -A
-   ```
+Works with Python 3.10–3.14. No setuptools/py2app version issues.
 
-**Requirements:** Build on macOS with a Python that has tkinter (e.g. `brew install python-tk@3.12` for Python 3.12).
+```bash
+cd audioshake-separator
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install pyinstaller
+pyinstaller VocalSeparator.spec
+```
 
-**If the build fails:** Use Python 3.12 or 3.13 for the venv and build (see step 1). If you see “No module named 'pkg_resources'” or “cannot import name '_files' from 'importlib.resources'”, you are on Python 3.14 — recreate the venv with `python3.12 -m venv venv`. If your shell’s `python` points to another interpreter, use the venv or run e.g. `python3.12 setup.py py2app`.
+The app is created at **`dist/VocalSeparator.app`**. Move it to Applications or share it. On first run, settings and API key are stored in **`~/Library/Application Support/VocalSeparator/`**.
+
+**Requirements:** macOS, Python with tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
+
+#### Option B: py2app
+
+Use Python 3.12 and setuptools <69 (py2app has known issues on 3.13+ with `pkg_resources` / `importlib.resources`).
+
+```bash
+python3.12 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+pip install "setuptools>=58,<69" py2app
+python setup.py py2app
+```
+
 
 ---
 
