@@ -4,21 +4,19 @@ Tests for separator.py
 
 import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 import responses
 
 from separator import (
+    API_BASE_URL,
     check_api_key,
+    create_job,
+    download_stems,
     get_headers,
     is_valid_audio_file,
     upload_file,
-    create_job,
     wait_for_completion,
-    download_stems,
-    VALID_EXTENSIONS,
-    API_BASE_URL,
 )
 
 

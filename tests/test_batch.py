@@ -2,12 +2,7 @@
 Tests for batch.py
 """
 
-from pathlib import Path
-from unittest.mock import patch
-
-import pytest
-
-from batch import find_audio_files, VALID_EXTENSIONS
+from batch import VALID_EXTENSIONS, find_audio_files
 
 
 class TestFindAudioFiles:

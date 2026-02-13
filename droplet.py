@@ -4,8 +4,8 @@ Drag-and-Drop handler for Voice Separator
 Receives files dropped onto the macOS app
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -38,7 +38,7 @@ def main():
         input("\nPress Enter to close...")
         return
 
-    console.print(f"\n[bold cyan]🎧 Audioshake Voice Separator[/bold cyan]\n")
+    console.print("\n[bold cyan]🎧 Audioshake Voice Separator[/bold cyan]\n")
     console.print(f"Received {len(valid_items)} item(s):\n")
 
     for item in valid_items:
@@ -59,8 +59,8 @@ def main():
             audio_files.append(item)
 
     # Import here to avoid circular imports
-    from separator import check_api_key, separate_file, is_valid_audio_file
     from batch import batch_process
+    from separator import check_api_key, is_valid_audio_file, separate_file
 
     if not check_api_key():
         input("\nPress Enter to close...")
@@ -86,7 +86,7 @@ def main():
             else:
                 console.print(f"[yellow]⚠️ Skipped (unsupported):[/yellow] {audio_file.name}")
 
-    console.print(f"\n[bold green]🎉 All done![/bold green]")
+    console.print("\n[bold green]🎉 All done![/bold green]")
     console.print(f"[blue]Files saved to:[/blue] {output_dir}\n")
 
     # Open output folder in Finder

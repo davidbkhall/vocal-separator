@@ -11,10 +11,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from rich.console import Console
+from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 from rich.table import Table
-from rich.progress import Progress, TaskID, BarColumn, TextColumn, TimeElapsedColumn
 
-from separator import check_api_key, separate_file, is_valid_audio_file, VALID_EXTENSIONS
+from separator import VALID_EXTENSIONS, check_api_key, is_valid_audio_file, separate_file
 
 load_dotenv()
 
@@ -65,7 +65,7 @@ def batch_process(
         sys.exit(1)
 
     # Find files
-    console.print(f"[blue]🔍 Scanning for audio files...[/blue]")
+    console.print("[blue]🔍 Scanning for audio files...[/blue]")
     files = find_audio_files(input_path, recursive)
 
     if not files:

@@ -9,7 +9,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 import requests
 from dotenv import load_dotenv
@@ -48,7 +47,7 @@ def is_valid_audio_file(file_path: Path) -> bool:
     return file_path.suffix.lower() in VALID_EXTENSIONS
 
 
-def upload_file(file_path: Path, quiet: bool = False) -> Optional[str]:
+def upload_file(file_path: Path, quiet: bool = False) -> str | None:
     """Upload audio file and return asset ID."""
     if not quiet:
         console.print(f"[blue]📤 Uploading:[/blue] {file_path.name}")
@@ -74,7 +73,7 @@ def upload_file(file_path: Path, quiet: bool = False) -> Optional[str]:
         return None
 
 
-def create_job(asset_id: str, quiet: bool = False) -> Optional[str]:
+def create_job(asset_id: str, quiet: bool = False) -> str | None:
     """Create vocal separation job and return job ID."""
     if not quiet:
         console.print("[blue]🎵 Starting vocal separation...[/blue]")
@@ -105,7 +104,7 @@ def create_job(asset_id: str, quiet: bool = False) -> Optional[str]:
         return None
 
 
-def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False) -> Optional[dict]:
+def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False) -> dict | None:
     """Poll until job completes."""
     url = f"{API_BASE_URL}/job/{job_id}"
 
