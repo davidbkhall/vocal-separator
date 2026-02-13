@@ -7,9 +7,17 @@
 
 import os
 import subprocess
+import sys
 
 _block_cipher = None
-_spec_dir = os.path.dirname(os.path.abspath(__file__))
+# PyInstaller may exec this spec without __file__; use spec path from argv or cwd
+try:
+    _spec_dir = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    if len(sys.argv) > 1 and sys.argv[1].endswith(".spec"):
+        _spec_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
+    else:
+        _spec_dir = os.getcwd()
 _icon_icns = os.path.join(_spec_dir, "assets", "icon.icns")
 _icon_png = os.path.join(_spec_dir, "assets", "icon.png")
 if not os.path.isfile(_icon_icns) and os.path.isfile(_icon_png):
