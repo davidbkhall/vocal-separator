@@ -86,7 +86,7 @@ if [ -d "venv" ]; then
 fi
 
 # Run the GUI app (pass dropped files as arguments so they appear in the list)
-python3 app_gui.py "$@"
+python3 app_gui.py "\$@"
 EOF
 
 chmod +x "$MACOS_DIR/launcher"
