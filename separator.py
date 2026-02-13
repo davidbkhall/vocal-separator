@@ -9,6 +9,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import cast
 
 import requests
 from dotenv import load_dotenv
@@ -66,7 +67,7 @@ def upload_file(file_path: Path, quiet: bool = False) -> str | None:
         asset_id = response.json().get("id")
         if not quiet:
             console.print(f"[green]✅ Uploaded[/green] (Asset ID: {asset_id})")
-        return asset_id
+        return cast(str | None, asset_id)
 
     except requests.exceptions.RequestException as e:
         console.print(f"[red]❌ Upload error:[/red] {e}")
@@ -97,7 +98,7 @@ def create_job(asset_id: str, quiet: bool = False) -> str | None:
         job_id = response.json().get("id")
         if not quiet:
             console.print(f"[green]✅ Job started[/green] (Job ID: {job_id})")
-        return job_id
+        return cast(str | None, job_id)
 
     except requests.exceptions.RequestException as e:
         console.print(f"[red]❌ Job creation error:[/red] {e}")
@@ -119,7 +120,7 @@ def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False
                 status = data.get("status", "unknown")
 
                 if status == "completed":
-                    return data
+                    return cast(dict, data)
                 elif status == "failed":
                     return None
 
@@ -147,7 +148,7 @@ def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False
 
                     if status == "completed":
                         progress.update(task, description="[green]✅ Processing complete!")
-                        return data
+                        return cast(dict, data)
                     elif status == "failed":
                         error = data.get("error", "Unknown error")
                         console.print(f"\n[red]❌ Job failed:[/red] {error}")

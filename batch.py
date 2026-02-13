@@ -27,13 +27,13 @@ def find_audio_files(input_path: Path, recursive: bool = False) -> list[Path]:
         return [input_path] if is_valid_audio_file(input_path) else []
 
     if recursive:
-        files = []
+        files: list[Path] = []
         for ext in VALID_EXTENSIONS:
             files.extend(input_path.rglob(f"*{ext}"))
             files.extend(input_path.rglob(f"*{ext.upper()}"))
         return sorted(set(files))
     else:
-        files = []
+        files: list[Path] = []
         for ext in VALID_EXTENSIONS:
             files.extend(input_path.glob(f"*{ext}"))
             files.extend(input_path.glob(f"*{ext.upper()}"))
