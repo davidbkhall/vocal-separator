@@ -21,6 +21,8 @@ ENV/
 dist/
 build/
 .eggs/
+# Generated at build time by build_icon.sh (avoids large binary in repo)
+assets/icon.icns
 assets/icon.iconset/
 
 # Output files
