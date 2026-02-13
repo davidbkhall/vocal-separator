@@ -31,6 +31,8 @@ separated_vocals/
 
 # Logs
 *.log
+logs/
+gui_config.json
 
 # Coverage reports
 .coverage

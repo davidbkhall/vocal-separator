@@ -85,8 +85,8 @@ if [ -d "venv" ]; then
     source venv/bin/activate
 fi
 
-# Run the droplet script with any dropped files
-python3 droplet.py "\$@"
+# Run the GUI app (pass dropped files as arguments so they appear in the list)
+python3 app_gui.py "$@"
 EOF
 
 chmod +x "$MACOS_DIR/launcher"

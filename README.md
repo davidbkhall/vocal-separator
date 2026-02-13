@@ -76,11 +76,13 @@ python batch.py ./music -r
 python batch.py ./music -o ./vocals -w 4
 ```plaintext
 
-### Drag-and-Drop App
+### GUI App (macOS)
 
-1. Run `./create_app.sh` to create the app
-2. Drag audio files or folders onto `VocalSeparator.app`
-3. Separated files appear in a `separated_vocals` folder
+1. Run `./create_app.sh` to create **VocalSeparator.app**
+2. Double-click the app to open the GUI
+3. **Main tab:** Add files or a folder, choose output directory, then click **Start**. Use **Stop** to cancel. Progress and per-file status are shown.
+4. **Settings tab:** Enter your API key, optional Audioshake format/job name, and enable a log file if desired. Click **Save settings**.
+5. Move the `.app` to Applications or keep it in the project folder (it uses this project’s Python and `.env`)
 
 ---
 

@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
@@ -74,7 +75,12 @@ def upload_file(file_path: Path, quiet: bool = False) -> str | None:
         return None
 
 
-def create_job(asset_id: str, quiet: bool = False) -> str | None:
+def create_job(
+    asset_id: str,
+    quiet: bool = False,
+    format: str = "vocals",
+    name: str = "vocal-separation",
+) -> str | None:
     """Create vocal separation job and return job ID."""
     if not quiet:
         console.print("[blue]🎵 Starting vocal separation...[/blue]")
@@ -82,8 +88,8 @@ def create_job(asset_id: str, quiet: bool = False) -> str | None:
     url = f"{API_BASE_URL}/job"
     payload = {
         "assetId": asset_id,
-        "format": "vocals",
-        "name": "vocal-separation",
+        "format": format,
+        "name": name,
     }
 
     try:
@@ -105,13 +111,20 @@ def create_job(asset_id: str, quiet: bool = False) -> str | None:
         return None
 
 
-def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False) -> dict | None:
-    """Poll until job completes."""
+def wait_for_completion(
+    job_id: str,
+    poll_interval: int = 5,
+    quiet: bool = False,
+    cancel_check: Callable[[], bool] | None = None,
+) -> dict | None:
+    """Poll until job completes. If cancel_check() returns True, abort and return None."""
     url = f"{API_BASE_URL}/job/{job_id}"
 
     if quiet:
         while True:
             try:
+                if cancel_check and cancel_check():
+                    return None
                 response = requests.get(url, headers=get_headers(), timeout=30)
                 if response.status_code != 200:
                     return None
@@ -137,6 +150,8 @@ def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False
 
             while True:
                 try:
+                    if cancel_check and cancel_check():
+                        return None
                     response = requests.get(url, headers=get_headers(), timeout=30)
 
                     if response.status_code != 200:
@@ -211,7 +226,14 @@ def download_stems(
     return saved_files
 
 
-def separate_file(input_file: Path, output_dir: Path, quiet: bool = False) -> bool:
+def separate_file(
+    input_file: Path,
+    output_dir: Path,
+    quiet: bool = False,
+    cancel_check: Callable[[], bool] | None = None,
+    format: str = "vocals",
+    name: str = "vocal-separation",
+) -> bool:
     """
     Separate a single file. Returns True on success.
     This is the core function used by both CLI and batch processing.
@@ -230,11 +252,11 @@ def separate_file(input_file: Path, output_dir: Path, quiet: bool = False) -> bo
     if not asset_id:
         return False
 
-    job_id = create_job(asset_id, quiet)
+    job_id = create_job(asset_id, quiet=quiet, format=format, name=name)
     if not job_id:
         return False
 
-    job_data = wait_for_completion(job_id, quiet=quiet)
+    job_data = wait_for_completion(job_id, quiet=quiet, cancel_check=cancel_check)
     if not job_data:
         return False
 
