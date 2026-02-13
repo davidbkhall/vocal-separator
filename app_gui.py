@@ -533,8 +533,12 @@ class VocalSeparatorApp:
         self.start_btn.config(state=tk.DISABLED)
         self.stop_btn.config(state=tk.NORMAL)
 
-        log_path = self.log_path_var.get().strip() if self.log_enabled_var.get() else None
-        if log_path and self.log_enabled_var.get():
+        log_path = (
+            (self.log_path_var.get().strip() or str(ensure_log_dir() / "vocal_separator.log"))
+            if self.log_enabled_var.get()
+            else None
+        )
+        if log_path:
             ensure_log_dir()
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write("\n--- Session ---\n")

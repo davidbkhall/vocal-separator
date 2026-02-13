@@ -93,25 +93,34 @@ To build a **self-contained** `.app` that includes Python and all dependencies:
 
 Works with Python 3.10–3.14. No setuptools/py2app version issues.
 
+**One-command build (includes app icon when `assets/icon.png` exists):**
+
 ```bash
 cd audioshake-separator
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 pip install pyinstaller
+./build_app.sh
+```
+
+**Or step by step (same result):**
+
+```bash
+cd audioshake-separator
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install pyinstaller
+./build_icon.sh    # build app icon from assets/icon.png (skip if you have no icon)
 pyinstaller VocalSeparator.spec
 ```
 
 The app is created at **`dist/VocalSeparator.app`**. Move it to Applications or share it. On first run, settings and API key are stored in **`~/Library/Application Support/VocalSeparator/`**.
 
-**App icon:** The repo includes `assets/icon.png`. To use it as the .app icon, create a macOS icon set and build the bundle:
+**App icon:** If `assets/icon.png` exists, run `./build_icon.sh` before PyInstaller (or use `./build_app.sh`, which does both). That creates `assets/icon.icns` so the built .app has a custom icon.
 
-```bash
-./build_icon.sh   # creates assets/icon.icns from assets/icon.png
-pyinstaller VocalSeparator.spec
-```
-
-If `build_icon.sh` fails (e.g. `iconutil` “Invalid Iconset”), create `assets/icon.icns` another way (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns) or Xcode) and run PyInstaller again.
+If `build_icon.sh` fails (e.g. `iconutil` not found), create `assets/icon.icns` another way (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns) or Xcode) and run PyInstaller again.
 
 **Requirements:** macOS, Python with tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
 
