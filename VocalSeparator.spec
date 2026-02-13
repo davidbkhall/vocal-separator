@@ -24,7 +24,8 @@ if not os.path.isfile(_icon_icns) and os.path.isfile(_icon_png):
     _build_script = os.path.join(_spec_dir, "build_icon.sh")
     if os.path.isfile(_build_script):
         subprocess.run(["/bin/bash", _build_script], cwd=_spec_dir, check=False)
-icon_path = _icon_icns if os.path.isfile(_icon_icns) else None
+# Use absolute path so PyInstaller finds the icon when creating the .app bundle
+icon_path = os.path.abspath(_icon_icns) if os.path.isfile(_icon_icns) else None
 block_cipher = _block_cipher
 
 # Bundle all of rich (including _unicode_data) so the frozen app does not fail at runtime

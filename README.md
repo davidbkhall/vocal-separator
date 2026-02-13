@@ -118,7 +118,7 @@ pyinstaller VocalSeparator.spec
 
 The app is created at **`dist/VocalSeparator.app`**. Move it to Applications or share it. On first run, settings and API key are stored in **`~/Library/Application Support/VocalSeparator/`**.
 
-**App icon:** If `assets/icon.png` exists, run `./build_icon.sh` before PyInstaller (or use `./build_app.sh`, which does both). That creates `assets/icon.icns` so the built .app has a custom icon.
+**App icon:** Use `./build_app.sh` so the icon is applied: it builds `assets/icon.icns` from `assets/icon.png`, runs PyInstaller, then copies the icon into the .app bundle and sets `Info.plist` (PyInstaller’s one-file macOS build often doesn’t apply the icon by itself). If you build with `pyinstaller VocalSeparator.spec` only, the app may show the default icon. If the icon still doesn’t show in Finder after `./build_app.sh`, run `touch dist/VocalSeparator.app` or restart Finder to refresh the icon cache.
 
 If `build_icon.sh` fails (e.g. `iconutil` not found), create `assets/icon.icns` another way (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns) or Xcode) and run PyInstaller again.
 

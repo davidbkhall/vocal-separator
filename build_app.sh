@@ -20,4 +20,17 @@ fi
 echo "Building VocalSeparator.app with PyInstaller..."
 pyinstaller VocalSeparator.spec
 
+# PyInstaller one-file on macOS often doesn't apply the icon; copy it into the bundle and set Info.plist
+APP="$SCRIPT_DIR/dist/VocalSeparator.app"
+RESOURCES="$APP/Contents/Resources"
+PLIST="$APP/Contents/Info.plist"
+if [[ -f "assets/icon.icns" && -d "$APP" && -f "$PLIST" ]]; then
+  mkdir -p "$RESOURCES"
+  cp "assets/icon.icns" "$RESOURCES/icon.icns"
+  # Tell the .app to use this icon (CFBundleIconFile = filename without .icns)
+  /usr/libexec/PlistBuddy -c "Delete :CFBundleIconFile" "$PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string icon" "$PLIST"
+  echo "Applied custom icon to .app bundle."
+fi
+
 echo "Done. App: dist/VocalSeparator.app"
