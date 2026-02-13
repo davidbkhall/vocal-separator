@@ -198,11 +198,7 @@ class TestDownload:
             status=200,
         )
 
-        job_data = {
-            "outputAssets": [
-                {"name": "vocals", "link": "https://example.com/vocals.wav"}
-            ]
-        }
+        job_data = {"outputAssets": [{"name": "vocals", "link": "https://example.com/vocals.wav"}]}
 
         saved = download_stems(job_data, output_dir, "song.mp3", quiet=True)
 

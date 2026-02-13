@@ -52,23 +52,23 @@ def upload_file(file_path: Path, quiet: bool = False) -> Optional[str]:
     """Upload audio file and return asset ID."""
     if not quiet:
         console.print(f"[blue]📤 Uploading:[/blue] {file_path.name}")
-    
+
     url = f"{API_BASE_URL}/upload"
-    
+
     try:
         with open(file_path, "rb") as f:
             files = {"file": (file_path.name, f)}
             response = requests.post(url, headers=get_headers(), files=files, timeout=300)
-        
+
         if response.status_code != 200:
             console.print(f"[red]❌ Upload failed ({response.status_code}):[/red] {response.text}")
             return None
-        
+
         asset_id = response.json().get("id")
         if not quiet:
             console.print(f"[green]✅ Uploaded[/green] (Asset ID: {asset_id})")
         return asset_id
-    
+
     except requests.exceptions.RequestException as e:
         console.print(f"[red]❌ Upload error:[/red] {e}")
         return None
@@ -78,26 +78,28 @@ def create_job(asset_id: str, quiet: bool = False) -> Optional[str]:
     """Create vocal separation job and return job ID."""
     if not quiet:
         console.print("[blue]🎵 Starting vocal separation...[/blue]")
-    
+
     url = f"{API_BASE_URL}/job"
     payload = {
         "assetId": asset_id,
         "format": "vocals",
         "name": "vocal-separation",
     }
-    
+
     try:
         response = requests.post(url, headers=get_headers(), json=payload, timeout=60)
-        
+
         if response.status_code not in [200, 201]:
-            console.print(f"[red]❌ Job creation failed ({response.status_code}):[/red] {response.text}")
+            console.print(
+                f"[red]❌ Job creation failed ({response.status_code}):[/red] {response.text}"
+            )
             return None
-        
+
         job_id = response.json().get("id")
         if not quiet:
             console.print(f"[green]✅ Job started[/green] (Job ID: {job_id})")
         return job_id
-    
+
     except requests.exceptions.RequestException as e:
         console.print(f"[red]❌ Job creation error:[/red] {e}")
         return None
@@ -106,22 +108,22 @@ def create_job(asset_id: str, quiet: bool = False) -> Optional[str]:
 def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False) -> Optional[dict]:
     """Poll until job completes."""
     url = f"{API_BASE_URL}/job/{job_id}"
-    
+
     if quiet:
         while True:
             try:
                 response = requests.get(url, headers=get_headers(), timeout=30)
                 if response.status_code != 200:
                     return None
-                
+
                 data = response.json()
                 status = data.get("status", "unknown")
-                
+
                 if status == "completed":
                     return data
                 elif status == "failed":
                     return None
-                
+
                 time.sleep(poll_interval)
             except requests.exceptions.RequestException:
                 return None
@@ -132,18 +134,18 @@ def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False
             console=console,
         ) as progress:
             task = progress.add_task("⏳ Processing audio...", total=None)
-            
+
             while True:
                 try:
                     response = requests.get(url, headers=get_headers(), timeout=30)
-                    
+
                     if response.status_code != 200:
                         console.print(f"[red]❌ Status check failed:[/red] {response.text}")
                         return None
-                    
+
                     data = response.json()
                     status = data.get("status", "unknown")
-                    
+
                     if status == "completed":
                         progress.update(task, description="[green]✅ Processing complete!")
                         return data
@@ -151,44 +153,46 @@ def wait_for_completion(job_id: str, poll_interval: int = 5, quiet: bool = False
                         error = data.get("error", "Unknown error")
                         console.print(f"\n[red]❌ Job failed:[/red] {error}")
                         return None
-                    
+
                     time.sleep(poll_interval)
-                
+
                 except requests.exceptions.RequestException as e:
                     console.print(f"[red]❌ Connection error:[/red] {e}")
                     return None
 
 
-def download_stems(job_data: dict, output_dir: Path, original_name: str, quiet: bool = False) -> list[Path]:
+def download_stems(
+    job_data: dict, output_dir: Path, original_name: str, quiet: bool = False
+) -> list[Path]:
     """Download separated audio files."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     stems = job_data.get("outputAssets", [])
-    
+
     if not stems:
         if not quiet:
             console.print("[yellow]⚠️ No output files found.[/yellow]")
         return []
-    
+
     if not quiet:
         console.print(f"\n[blue]📥 Downloading {len(stems)} file(s)...[/blue]")
-    
+
     saved_files = []
     base_name = Path(original_name).stem
-    
+
     for stem in stems:
         stem_name = stem.get("name", "output")
         stem_url = stem.get("link") or stem.get("url")
-        
+
         if not stem_url:
             continue
-        
+
         extension = Path(stem_url).suffix.split("?")[0] or ".wav"
         output_file = output_dir / f"{base_name}_{stem_name}{extension}"
-        
+
         try:
             response = requests.get(stem_url, stream=True, timeout=300)
-            
+
             if response.status_code == 200:
                 with open(output_file, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
@@ -199,11 +203,11 @@ def download_stems(job_data: dict, output_dir: Path, original_name: str, quiet: 
             else:
                 if not quiet:
                     console.print(f"   [red]❌[/red] Failed: {stem_name}")
-        
+
         except requests.exceptions.RequestException as e:
             if not quiet:
                 console.print(f"   [red]❌[/red] Download error: {e}")
-    
+
     return saved_files
 
 
@@ -216,24 +220,24 @@ def separate_file(input_file: Path, output_dir: Path, quiet: bool = False) -> bo
         if not quiet:
             console.print(f"[red]❌ File not found:[/red] {input_file}")
         return False
-    
+
     if not is_valid_audio_file(input_file):
         if not quiet:
             console.print(f"[yellow]⚠️ Skipping unsupported file:[/yellow] {input_file.name}")
         return False
-    
+
     asset_id = upload_file(input_file, quiet)
     if not asset_id:
         return False
-    
+
     job_id = create_job(asset_id, quiet)
     if not job_id:
         return False
-    
+
     job_data = wait_for_completion(job_id, quiet=quiet)
     if not job_data:
         return False
-    
+
     saved = download_stems(job_data, output_dir, input_file.name, quiet)
     return len(saved) > 0
 
@@ -241,12 +245,12 @@ def separate_file(input_file: Path, output_dir: Path, quiet: bool = False) -> bo
 def separate(input_file: Path, output_dir: Path):
     """Main separation workflow for single file."""
     console.print("\n[bold cyan]🎧 Audioshake Voice Separator[/bold cyan]\n")
-    
+
     if not check_api_key():
         sys.exit(1)
-    
+
     success = separate_file(input_file, output_dir)
-    
+
     if success:
         console.print(f"\n[bold green]🎉 Done![/bold green] Files saved to: {output_dir}\n")
     else:
@@ -267,20 +271,21 @@ Examples:
 For batch processing, use: python batch.py <directory>
         """,
     )
-    
+
     parser.add_argument(
         "input",
         type=Path,
         help="Input audio file (MP3, WAV, FLAC, M4A, etc.)",
     )
-    
+
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         type=Path,
         default=Path("./output"),
         help="Output directory (default: ./output)",
     )
-    
+
     args = parser.parse_args()
     separate(args.input, args.output)
 
