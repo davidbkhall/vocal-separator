@@ -89,12 +89,15 @@ python batch.py ./music -o ./vocals -w 4
 
 To build a **self-contained** `.app` that includes Python and all dependencies (so others can run it without installing Python or pip packages):
 
-1. Install dependencies and py2app:
+1. Use a virtual environment and the **same Python** for install and build (avoids wrong interpreter and missing packages):
    ```bash
+   cd audioshake-separator
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements.txt
    pip install py2app
    ```
-2. Build the bundle:
+2. Build the bundle (use the venv’s `python` so it matches the env where you installed packages):
    ```bash
    python setup.py py2app
    ```
@@ -107,6 +110,8 @@ To build a **self-contained** `.app` that includes Python and all dependencies (
    ```
 
 **Requirements:** Build on macOS with a Python that has tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
+
+**If the build fails:** Ensure the same Python runs the build as the one where you ran `pip install`. If your shell’s `python` points to another interpreter (e.g. a different corporate Python), use the venv as above, or run explicitly: `python3.11 setup.py py2app` (match the version from `pip --version`). A “macOS 15 (1507) or later required”–style abort often comes from a different Python build; using Homebrew Python in a venv usually avoids it.
 
 ---
 
