@@ -18,6 +18,8 @@ ENV/
 
 # App bundle (users will generate this themselves)
 *.app/
+dist/
+build/
 
 # Output files
 output/

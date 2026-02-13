@@ -17,7 +17,14 @@ from tkinter import filedialog, messagebox, ttk
 # Load .env before importing separator (so API_KEY is set)
 from dotenv import load_dotenv
 
-SCRIPT_DIR = Path(__file__).parent.resolve()
+# When bundled (py2app), use Application Support so config is writable
+if getattr(sys, "frozen", False):
+    _app_support = Path.home() / "Library" / "Application Support" / "VocalSeparator"
+    _app_support.mkdir(parents=True, exist_ok=True)
+    SCRIPT_DIR = _app_support
+else:
+    SCRIPT_DIR = Path(__file__).parent.resolve()
+
 load_dotenv(SCRIPT_DIR / ".env")
 
 from separator import (  # noqa: E402 (load_dotenv must run first)
@@ -396,10 +403,11 @@ class VocalSeparatorApp:
         if not self.file_list:
             messagebox.showwarning("Main", "Add at least one file or folder.")
             return
-        output_dir = Path(self.output_var.get().strip())
-        if not output_dir:
+        output_str = self.output_var.get().strip()
+        if not output_str:
             messagebox.showwarning("Main", "Choose an output directory.")
             return
+        output_dir = Path(output_str)
         if not check_api_key():
             messagebox.showerror("Main", "API key not set. Open Settings and save your API key.")
             return

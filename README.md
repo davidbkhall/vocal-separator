@@ -78,11 +78,35 @@ python batch.py ./music -o ./vocals -w 4
 
 ### GUI App (macOS)
 
-1. Run `./create_app.sh` to create **VocalSeparator.app**
-2. Double-click the app to open the GUI
-3. **Main tab:** Add files or a folder, choose output directory, then click **Start**. Use **Stop** to cancel. Progress and per-file status are shown.
-4. **Settings tab:** Enter your API key, optional Audioshake format/job name, and enable a log file if desired. Click **Save settings**.
-5. Move the `.app` to Applications or keep it in the project folder (it uses this project’s Python and `.env`)
+1. Install dependencies: `pip install -r requirements.txt` (or use a venv; see Setup).
+2. Run `./create_app.sh` to create **VocalSeparator.app**
+3. Double-click the app to open the GUI
+4. **Main tab:** Add files or a folder, choose output directory, then click **Start**. Use **Stop** to cancel. Progress and per-file status are shown.
+5. **Settings tab:** Enter your API key, optional Audioshake format/job name, and enable a log file if desired. Click **Save settings**.
+6. Move the `.app` to Applications or keep it in the project folder (it uses this project’s Python and `.env`)
+
+### Building a standalone macOS app (bundle)
+
+To build a **self-contained** `.app` that includes Python and all dependencies (so others can run it without installing Python or pip packages):
+
+1. Install dependencies and py2app:
+   ```bash
+   pip install -r requirements.txt
+   pip install py2app
+   ```
+2. Build the bundle:
+   ```bash
+   python setup.py py2app
+   ```
+3. The app is created at **`dist/VocalSeparator.app`**. You can move it to Applications or share it.
+4. On first run, the bundled app stores settings and API key in **`~/Library/Application Support/VocalSeparator/`** (create that folder and add a `.env` with your API key there if you pre-configure).
+
+**Development build** (faster; uses your current Python and installed packages, no copy of dependencies):
+   ```bash
+   python setup.py py2app -A
+   ```
+
+**Requirements:** Build on macOS with a Python that has tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
 
 ---
 
@@ -146,6 +170,16 @@ pre-commit run --all-files
 ---
 
 ## Troubleshooting
+
+**"No module named '_tkinter'" when running the GUI**
+
+If you use Homebrew Python, install tkinter for your Python version:
+
+```bash
+brew install python-tk@3.14   # or python-tk@3.12, etc. to match your python3
+```
+
+Then run `python3 app_gui.py` again.
 
 **"AUDIOSHAKE_API_KEY not found"**
 - Make sure you've created a `.env` file with your API key
