@@ -124,6 +124,25 @@ For each input file, you'll get:
 
 ---
 
+## Development
+
+### Pre-commit hooks (linting)
+
+To run ruff and mypy automatically before each commit:
+
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+After that, every `git commit` will run formatting, linting, and type checking. To run the hooks manually on all files:
+
+```bash
+pre-commit run --all-files
+```
+
+---
+
 ## Troubleshooting
 
 **"AUDIOSHAKE_API_KEY not found"**
