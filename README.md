@@ -1,7 +1,7 @@
 # Audioshake Voice Separator
 
-A lightweight CLI tool to extract vocals from audio files using the Audioshake API.
-Includes batch processing and a macOS drag-and-drop app.
+A lightweight tool to extract vocals from audio files using the Audioshake API.
+Includes batch processing, and both a drag-and-drop and a GUI MacOS app.
 
 ## Features
 
