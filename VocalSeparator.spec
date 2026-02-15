@@ -6,6 +6,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import re
 import subprocess
 import sys
 
@@ -18,6 +19,10 @@ except NameError:
         _spec_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
     else:
         _spec_dir = os.getcwd()
+# Version from pyproject.toml (single source of truth)
+with open(os.path.join(_spec_dir, "pyproject.toml"), encoding="utf-8") as _f:
+    _v = re.search(r'version\s*=\s*"([^"]+)"', _f.read())
+APP_VERSION = _v.group(1) if _v else "1.0.0"
 _icon_icns = os.path.join(_spec_dir, "assets", "icon.icns")
 _icon_png = os.path.join(_spec_dir, "assets", "icon.png")
 if not os.path.isfile(_icon_icns) and os.path.isfile(_icon_png):
@@ -114,7 +119,7 @@ if sys.platform == "darwin":
         bundle_identifier=None,
         info_plist={
             "CFBundleIconFile": "icon",
-            "CFBundleShortVersionString": "1.0.0",
-            "CFBundleVersion": "1.0.0",
+            "CFBundleShortVersionString": APP_VERSION,
+            "CFBundleVersion": APP_VERSION,
         },
     )

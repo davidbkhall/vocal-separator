@@ -6,6 +6,12 @@ set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Version from pyproject.toml (single source of truth); fallback to 1.0.0 if extraction fails
+APP_VERSION=$(grep '^version = ' pyproject.toml 2>/dev/null | sed 's/version = "\(.*\)"/\1/' | head -n1)
+if [ -z "$APP_VERSION" ]; then
+  APP_VERSION="1.0.0"
+fi
+
 APP_NAME="VocalSeparator"
 APP_DIR="$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
@@ -32,7 +38,7 @@ cat > "$CONTENTS_DIR/Info.plist" << 'EOF'
     <key>CFBundleIdentifier</key>
     <string>com.audioshake.vocalseparator</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>__APP_VERSION__</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
@@ -73,6 +79,7 @@ cat > "$CONTENTS_DIR/Info.plist" << 'EOF'
 </dict>
 </plist>
 EOF
+sed -i '' "s/__APP_VERSION__/$APP_VERSION/g" "$CONTENTS_DIR/Info.plist"
 
 # Create launcher script (cd to repo root, use venv, run installed package)
 cat > "$MACOS_DIR/launcher" << EOF

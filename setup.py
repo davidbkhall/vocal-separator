@@ -14,12 +14,17 @@ For development (alias mode, uses your env; faster):
 """
 
 import os
+import re
 import subprocess
 
 from setuptools import find_packages, setup
 
-# Ensure app icon exists before build (create from assets/icon.png if needed)
 _setup_dir = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(_setup_dir, "pyproject.toml"), encoding="utf-8") as _f:
+    _version = re.search(r'version\s*=\s*"([^"]+)"', _f.read())
+VERSION = _version.group(1) if _version else "1.0.0"
+
+# Ensure app icon exists before build (create from assets/icon.png if needed)
 _icon_icns = os.path.join(_setup_dir, "assets", "icon.icns")
 _icon_png = os.path.join(_setup_dir, "assets", "icon.png")
 if not os.path.isfile(_icon_icns) and os.path.isfile(_icon_png):
@@ -45,8 +50,8 @@ OPTIONS = {
         "CFBundleName": "VocalSeparator",
         "CFBundleDisplayName": "Vocal Separator",
         "CFBundleIdentifier": "com.audioshake.vocalseparator",
-        "CFBundleVersion": "1.0.0",
-        "CFBundleShortVersionString": "1.0.0",
+        "CFBundleVersion": VERSION,
+        "CFBundleShortVersionString": VERSION,
         "NSHighResolutionCapable": True,
         "CFBundleDocumentTypes": [
             {

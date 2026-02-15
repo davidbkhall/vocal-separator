@@ -140,6 +140,14 @@ pre-commit install
 
 Then `git commit` runs ruff + mypy. Manual run: `pre-commit run --all-files`.
 
+## Versioning
+
+The project version is **1.0.0** and is defined in a single place:
+
+- **`pyproject.toml`** — `[project]` → `version = "1.0.0"`
+
+That value is used by the package (`vocal_separator.__version__`), the PyInstaller and py2app builds, and the dev `.app` from `create_app.sh`. To release a new version, update it only in `pyproject.toml` (e.g. to `1.1.0`), then reinstall and/or rebuild the app as needed.
+
 ## Troubleshooting
 
 | Issue | Fix |
