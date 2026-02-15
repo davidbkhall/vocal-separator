@@ -2,7 +2,7 @@
 Tests for batch.py
 """
 
-from batch import VALID_EXTENSIONS, find_audio_files
+from audioshake_separator.batch import VALID_EXTENSIONS, find_audio_files
 
 
 class TestFindAudioFiles:

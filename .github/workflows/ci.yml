@@ -36,19 +36,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -e .
           pip install -r requirements-dev.txt
 
       - name: Run linter (Ruff)
         run: |
-          ruff check .
+          ruff check src tests run_gui.py
 
       - name: Run type checker (mypy)
         run: |
-          mypy separator.py batch.py --ignore-missing-imports
+          mypy src/audioshake_separator --ignore-missing-imports
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -76,8 +77,8 @@ jobs:
 
       - name: Check formatting
         run: |
-          ruff format --check .
+          ruff format --check src tests run_gui.py
 
       - name: Check linting
         run: |
-          ruff check .
+          ruff check src tests run_gui.py

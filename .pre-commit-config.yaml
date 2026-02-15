@@ -23,6 +23,6 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: mypy separator.py batch.py --ignore-missing-imports
+        entry: mypy src/audioshake_separator --ignore-missing-imports
         language: system
         pass_filenames: false

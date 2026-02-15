@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import responses
 
-from separator import (
+from audioshake_separator.separator import (
     API_BASE_URL,
     check_api_key,
     create_task,
@@ -57,12 +57,12 @@ class TestValidation:
 
     def test_check_api_key_present(self):
         """Test that present API key returns True."""
-        with patch("separator.get_api_key", return_value="test_key_123"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key_123"):
             assert check_api_key() is True
 
     def test_get_headers(self):
         """Test that headers include x-api-key per AudioShake docs."""
-        with patch("separator.get_api_key", return_value="test_key_123"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key_123"):
             headers = get_headers()
             assert "x-api-key" in headers
             assert headers["x-api-key"] == "test_key_123"
@@ -86,7 +86,7 @@ class TestUpload:
             status=200,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             asset_id = upload_file(test_file, quiet=True)
 
         assert asset_id == "asset_123"
@@ -104,7 +104,7 @@ class TestUpload:
             status=400,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             asset_id = upload_file(test_file, quiet=True)
 
         assert asset_id is None
@@ -123,7 +123,7 @@ class TestTaskCreation:
             status=201,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             task_id = create_task(
                 "asset_123", [{"model": "vocals", "formats": ["wav"]}], quiet=True
             )
@@ -140,7 +140,7 @@ class TestTaskCreation:
             status=400,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             task_id = create_task(
                 "invalid_asset", [{"model": "vocals", "formats": ["wav"]}], quiet=True
             )
@@ -169,7 +169,7 @@ class TestTaskPolling:
             status=200,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             result = wait_for_completion("task_123", poll_interval=0, quiet=True)
 
         assert result is not None
@@ -188,7 +188,7 @@ class TestTaskPolling:
             status=200,
         )
 
-        with patch("separator.get_api_key", return_value="test_key"):
+        with patch("audioshake_separator.separator.get_api_key", return_value="test_key"):
             result = wait_for_completion("task_123", poll_interval=0, quiet=True)
 
         assert result is None

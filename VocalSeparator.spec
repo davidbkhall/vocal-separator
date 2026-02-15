@@ -21,7 +21,7 @@ except NameError:
 _icon_icns = os.path.join(_spec_dir, "assets", "icon.icns")
 _icon_png = os.path.join(_spec_dir, "assets", "icon.png")
 if not os.path.isfile(_icon_icns) and os.path.isfile(_icon_png):
-    _build_script = os.path.join(_spec_dir, "build_icon.sh")
+    _build_script = os.path.join(_spec_dir, "scripts", "build_icon.sh")
     if os.path.isfile(_build_script):
         subprocess.run(["/bin/bash", _build_script], cwd=_spec_dir, check=False)
 # Use absolute path so PyInstaller finds the icon when creating the .app bundle
@@ -38,12 +38,15 @@ except Exception:
     _rich_hidden = ["rich", "rich.console", "rich.progress"]
 
 a = Analysis(
-    ["app_gui.py"],
-    pathex=[],
+    ["run_gui.py"],
+    pathex=[os.path.join(_spec_dir, "src")],
     binaries=_rich_binaries,
     datas=_rich_datas,
     hiddenimports=[
-        "separator",
+        "audioshake_separator",
+        "audioshake_separator.separator",
+        "audioshake_separator.batch",
+        "audioshake_separator.app_gui",
         "dotenv",
         "requests",
         "urllib3",
