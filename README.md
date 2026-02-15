@@ -71,7 +71,7 @@ Output: **`dist/VocalSeparator.app`**. Move to Applications or share. On first r
 
 - **Icon:** `./scripts/build_app.sh` builds `assets/icon.icns` from `assets/icon.png` and applies it. If the icon doesn’t appear, run `touch dist/VocalSeparator.app` or restart Finder.
 - **If `scripts/build_icon.sh` fails:** create `assets/icon.icns` elsewhere (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns)) and run `./scripts/build_app.sh` again.
-- **tkinter:** If you use Homebrew Python and get “No module named '_tkinter'”, run `brew install python-tk@3.14` (or match your Python version).
+- **tkinter:** If you use Homebrew Python and get “No module named '_tkinter'”, run `brew install python-tk@3.14` (or match your Python version). The .app build must use a Python that has tkinter so Tcl/Tk gets bundled; otherwise the frozen app will show “No module named 'tkinter'”.
 
 Alternative (py2app): Python 3.12, setuptools &lt;69, then `pip install -e . py2app` and `python setup.py py2app`.
 
@@ -126,6 +126,8 @@ Then `git commit` runs ruff + mypy. Manual run: `pre-commit run --all-files`.
 
 | Issue | Fix |
 |-------|-----|
+| **VocalSeparator.app does nothing when opened** | Run the binary from Terminal to see the error: `./dist/VocalSeparator.app/Contents/MacOS/VocalSeparator` (or `./dist/VocalSeparator/VocalSeparator` if no .app). Check `~/Library/Application Support/VocalSeparator/launch_error.log` for the traceback. If it says “No module named 'tkinter'”, rebuild with a Python that has tkinter: `brew install python-tk@3.11` (or your version), recreate the venv with that Python, then `./scripts/build_app.sh` again. |
+| **App icon doesn’t appear** | Ensure `assets/icon.png` exists before building; `./scripts/build_app.sh` creates `icon.icns` and copies it into the .app. If the icon still doesn’t show, run `touch dist/VocalSeparator.app` or log out and back in to refresh Finder. |
 | **AUDIOSHAKE_API_KEY not found** | Create `.env` from `.env.example`, add your key. |
 | **Upload failed / 401** | Check API key and quota; invalid/expired key shows a clear auth error. |
 | **Drag-and-drop app doesn’t work** | Run `./scripts/create_app.sh` from project root; run `pip install -e .` then `python -m audioshake_separator.droplet <file>` to see errors. |

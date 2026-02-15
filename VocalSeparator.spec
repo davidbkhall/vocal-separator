@@ -31,11 +31,15 @@ block_cipher = _block_cipher
 # Bundle all of rich (including _unicode_data) so the frozen app does not fail at runtime
 try:
     from PyInstaller.utils.hooks import collect_all
+
     _rich_datas, _rich_binaries, _rich_hidden = collect_all("rich")
 except Exception:
     _rich_datas = []
     _rich_binaries = []
     _rich_hidden = ["rich", "rich.console", "rich.progress"]
+
+# Tcl/Tk data are added by PyInstaller's hook-_tkinter when _tkinter is a dependency.
+# Do not add them again here or COLLECT can hit IsADirectoryError (duplicate dest paths).
 
 a = Analysis(
     ["run_gui.py"],
@@ -47,13 +51,16 @@ a = Analysis(
         "audioshake_separator.separator",
         "audioshake_separator.batch",
         "audioshake_separator.app_gui",
+        "_tkinter",
+        "tkinter",
         "dotenv",
         "requests",
         "urllib3",
         "certifi",
         "charset_normalizer",
         "idna",
-    ] + _rich_hidden,
+    ]
+    + _rich_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
