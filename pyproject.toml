@@ -14,8 +14,8 @@ dependencies = [
 ]
 
 [project.scripts]
-audioshake-separate = "vocal_separator.separator:main"
-audioshake-batch = "vocal_separator.batch:main"
+vocal-separate = "vocal_separator.separator:main"
+vocal-batch = "vocal_separator.batch:main"
 vocalseparator = "vocal_separator.app_gui:main"
 
 [tool.setuptools.packages.find]

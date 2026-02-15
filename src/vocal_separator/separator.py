@@ -364,7 +364,7 @@ Examples:
   %(prog)s song.wav -o ./vocals
   %(prog)s podcast.mp3 --output ~/Desktop/separated
 
-For batch processing, use: audioshake-batch <directory>
+For batch processing, use: vocal-batch <directory>
         """,
     )
 

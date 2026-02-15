@@ -22,8 +22,8 @@ def main():
     if len(sys.argv) < 2:
         console.print("[yellow]Drop audio files onto this app to separate vocals.[/yellow]")
         console.print("\nOr run from command line:")
-        console.print("  audioshake-separate <file>")
-        console.print("  audioshake-batch <directory>")
+        console.print("  vocal-separate <file>")
+        console.print("  vocal-batch <directory>")
         input("\nPress Enter to close...")
         return
 

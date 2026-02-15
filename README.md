@@ -25,15 +25,15 @@ cp .env.example .env
 # Edit .env and add AUDIOSHAKE_API_KEY=your_key
 ```
 
-This installs the package in editable mode and registers the `audioshake-separate`, `audioshake-batch`, and `vocalseparator` commands.
+This installs the package in editable mode and registers the `vocal-separate`, `vocal-batch`, and `vocalseparator` commands.
 
 ## Usage
 
 ### CLI — single file
 
 ```bash
-audioshake-separate song.mp3
-audioshake-separate song.wav -o ./vocals
+vocal-separate song.mp3
+vocal-separate song.wav -o ./vocals
 ```
 
 Or: `python -m vocal_separator.separator song.mp3`
@@ -41,8 +41,8 @@ Or: `python -m vocal_separator.separator song.mp3`
 ### CLI — batch
 
 ```bash
-audioshake-batch ./music
-audioshake-batch ./music -r -o ./vocals -w 4   # recursive, 4 workers
+vocal-batch ./music
+vocal-batch ./music -r -o ./vocals -w 4   # recursive, 4 workers
 ```
 
 Or: `python -m vocal_separator.batch ./music`
@@ -79,8 +79,8 @@ Alternative (py2app): Python 3.12, setuptools &lt;69, then `pip install -e . py2
 
 | Command               | Options |
 |-----------------------|---------|
-| `audioshake-separate` | `input` (file), `-o/--output` (default: `./output`) |
-| `audioshake-batch`    | `input` (dir or files), `-o/--output`, `-r/--recursive`, `-w/--workers` (default: 2) |
+| `vocal-separate` | `input` (file), `-o/--output` (default: `./output`) |
+| `vocal-batch`    | `input` (dir or files), `-o/--output`, `-r/--recursive`, `-w/--workers` (default: 2) |
 
 ## Output
 
