@@ -1,224 +1,104 @@
 # Audioshake Voice Separator
 
-A lightweight tool to extract vocals from audio files using the Audioshake API.
-Includes batch processing, and both a drag-and-drop and a GUI MacOS app.
+Extract vocals from audio using the [Audioshake API](https://developer.audioshake.ai/). CLI, batch processing, and a macOS GUI/drag-and-drop app.
 
 ## Features
 
-- 🎵 Extract vocals from any audio file
-- 📁 Batch process entire folders
-- 🖱️ Drag-and-drop macOS app
-- ⚡ Parallel processing for speed
-- 🍎 Optimized for Apple Silicon
+- Extract vocals (and instrumentals) from MP3, WAV, FLAC, M4A, OGG, AAC, WMA
+- Batch process folders with optional parallel workers
+- macOS: GUI app or drag-and-drop droplet; optional standalone `.app` bundle
 
 ## Requirements
 
 - Python 3.9+
-- macOS (for drag-and-drop app) or any OS (for CLI)
-- Audioshake API key
+- [Audioshake API key](https://www.audioshake.ai) (sign up, then get key from dashboard/settings)
+- macOS only for the GUI/drag-and-drop and for building the standalone app
 
 ## Setup
-
-### 1. Clone/download this project
-
-### 2. Create virtual environment and install dependencies
 
 ```bash
 cd audioshake-separator
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```plaintext
-
-### 3. Configure your API key
-
-```bash
 cp .env.example .env
-# Edit .env and add your Audioshake API key
-```plaintext
-
-### 4. (Optional) Create the drag-and-drop app
-
-```bash
-chmod +x create_app.sh
-./create_app.sh
-```plaintext
-
-## Getting an API Key
-
-1. Visit [audioshake.ai](https://www.audioshake.ai)
-2. Sign up for an account
-3. Navigate to your dashboard/API settings
-4. Generate an API key
-5. Copy it to your `.env` file
-
----
+# Edit .env and add AUDIOSHAKE_API_KEY=your_key
+```
 
 ## Usage
 
-### Single File (CLI)
+### CLI — single file
 
 ```bash
 python separator.py song.mp3
 python separator.py song.wav -o ./vocals
-```plaintext
+```
 
-### Batch Processing
+### CLI — batch
 
 ```bash
-# Process all audio in a folder
 python batch.py ./music
+python batch.py ./music -r -o ./vocals -w 4   # recursive, 4 workers
+```
 
-# Recursive (include subfolders)
-python batch.py ./music -r
+### macOS: quick GUI / drag-and-drop
 
-# Custom output and parallel jobs
-python batch.py ./music -o ./vocals -w 4
-```plaintext
-
-### GUI App (macOS)
-
-1. Install dependencies: `pip install -r requirements.txt` (or use a venv; see Setup).
-2. Run `./create_app.sh` to create **VocalSeparator.app**
-3. Double-click the app to open the GUI
-4. **Main tab:** Add files or a folder, choose output directory, then click **Start**. Use **Stop** to cancel. Progress and per-file status are shown.
-5. **Settings tab:** Enter your API key and optional task options (model, output format, variant, residual) per [AudioShake Tasks API](https://developer.audioshake.ai/). Enable a log file if desired. Click **Save settings**.
-6. Move the `.app` to Applications or keep it in the project folder (it uses this project’s Python and `.env`)
-
-### Building a standalone macOS app (bundle)
-
-To build a **self-contained** `.app` that includes Python and all dependencies:
-
-#### Option A: PyInstaller (recommended)
-
-Works with Python 3.10–3.14. No setuptools/py2app version issues.
-
-**One-command build (includes app icon when `assets/icon.png` exists):**
+Uses your project venv and `.env`:
 
 ```bash
-cd audioshake-separator
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+./create_app.sh
+# Then double-click VocalSeparator.app (or the droplet) from the project
+```
+
+Open the app → **Settings** to set your API key and options. **Main** tab: add files or folder, choose output dir, click **Start**.
+
+### macOS: standalone .app (shareable bundle)
+
+Build a self-contained `VocalSeparator.app` with Python and dependencies inside (no need for a venv on the target machine):
+
+```bash
 pip install pyinstaller
 ./build_app.sh
 ```
 
-**Or step by step (same result):**
+Output: **`dist/VocalSeparator.app`**. Move to Applications or share. On first run, settings and API key are stored under `~/Library/Application Support/VocalSeparator/`.
 
-```bash
-cd audioshake-separator
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-pip install pyinstaller
-./build_icon.sh    # build app icon from assets/icon.png (skip if you have no icon)
-pyinstaller VocalSeparator.spec
-```
+- **Icon:** `./build_app.sh` builds `assets/icon.icns` from `assets/icon.png` and applies it. If the icon doesn’t appear, run `touch dist/VocalSeparator.app` or restart Finder.
+- **If `build_icon.sh` fails:** create `assets/icon.icns` elsewhere (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns)) and run `./build_app.sh` again.
+- **tkinter:** If you use Homebrew Python and get “No module named '_tkinter'”, run `brew install python-tk@3.14` (or match your Python version).
 
-The app is created at **`dist/VocalSeparator.app`**. Move it to Applications or share it. On first run, settings and API key are stored in **`~/Library/Application Support/VocalSeparator/`**.
+Alternative (py2app): Python 3.12, setuptools &lt;69, then `pip install py2app` and `python setup.py py2app`.
 
-**App icon:** Use `./build_app.sh` so the icon is applied: it builds `assets/icon.icns` from `assets/icon.png`, runs PyInstaller, then copies the icon into the .app bundle and sets `Info.plist` (PyInstaller’s one-file macOS build often doesn’t apply the icon by itself). If you build with `pyinstaller VocalSeparator.spec` only, the app may show the default icon. If the icon still doesn’t show in Finder after `./build_app.sh`, run `touch dist/VocalSeparator.app` or restart Finder to refresh the icon cache.
+## CLI options
 
-If `build_icon.sh` fails (e.g. `iconutil` not found), create `assets/icon.icns` another way (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns) or Xcode) and run PyInstaller again.
-
-**Requirements:** macOS, Python with tkinter (e.g. `brew install python-tk@3.14` if using Homebrew Python).
-
-#### Option B: py2app
-
-Use Python 3.12 and setuptools <69 (py2app has known issues on 3.13+ with `pkg_resources` / `importlib.resources`).
-
-```bash
-python3.12 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-pip install "setuptools>=58,<69" py2app
-python setup.py py2app
-```
-
-
----
-
-## CLI Options
-
-### `separator.py`
-
-| Option | Description |
-|--------|-------------|
-| `input` | Input audio file |
-| `-o, --output` | Output directory (default: `./output`) |
-
-### `batch.py`
-
-| Option | Description |
-|--------|-------------|
-| `input` | Input directory or files |
-| `-o, --output` | Output directory (default: `./output`) |
-| `-r, --recursive` | Search subdirectories |
-| `-w, --workers` | Parallel jobs (default: 2) |
-
----
-
-## Supported Formats
-
-- MP3
-- WAV
-- FLAC
-- M4A
-- OGG
-- AAC
-- WMA
-
----
+| Script         | Options |
+|----------------|---------|
+| `separator.py` | `input` (file), `-o/--output` (default: `./output`) |
+| `batch.py`     | `input` (dir or files), `-o/--output`, `-r/--recursive`, `-w/--workers` (default: 2) |
 
 ## Output
 
-For each input file, you'll get:
-- `{filename}_vocals.wav` - Isolated vocal track
-- `{filename}_instrumental.wav` - Background/instrumental track
+Per input file you get (names follow Audioshake task output):
 
----
+- `{basename}_vocals.wav`
+- `{basename}_instrumental.wav`
+
+(Exact stems depend on the task target; see Settings in the GUI or [Tasks API](https://developer.audioshake.ai/).)
 
 ## Development
-
-### Pre-commit hooks (linting)
-
-To run ruff and mypy automatically before each commit:
 
 ```bash
 pip install -r requirements-dev.txt
 pre-commit install
 ```
 
-After that, every `git commit` will run formatting, linting, and type checking. To run the hooks manually on all files:
-
-```bash
-pre-commit run --all-files
-```
-
----
+Then `git commit` runs ruff + mypy. Manual run: `pre-commit run --all-files`.
 
 ## Troubleshooting
 
-**"No module named '_tkinter'" when running the GUI**
-
-If you use Homebrew Python, install tkinter for your Python version:
-
-```bash
-brew install python-tk@3.14   # or python-tk@3.12, etc. to match your python3
-```
-
-Then run `python3 app_gui.py` again.
-
-**"AUDIOSHAKE_API_KEY not found"**
-- Make sure you've created a `.env` file with your API key
-- Check that the key is correct
-
-**"Upload failed"**
-- Check your internet connection
-- Verify your API key is valid
-- Ensure the file isn't corrupted
-
-**Drag-and-drop app doesn't work**
-- Make sure you ran `create_app.sh` from the project directory
-- Check that the virtual environment is set up
-- Try running `python droplet.py <file>` directly to see errors
+| Issue | Fix |
+|-------|-----|
+| **AUDIOSHAKE_API_KEY not found** | Create `.env` from `.env.example`, add your key. |
+| **Upload failed / 401** | Check API key and quota; invalid/expired key shows a clear auth error. |
+| **Drag-and-drop app doesn’t work** | Run `./create_app.sh` from project root; run `python droplet.py <file>` to see errors. |
+| **No module named '_tkinter'** | Homebrew: `brew install python-tk@3.14` (or your Python version). |

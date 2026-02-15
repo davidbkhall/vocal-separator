@@ -63,28 +63,44 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# Onedir + COLLECT so we get a proper .app bundle on macOS (onefile does not create .app).
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="VocalSeparator",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
     console=False,  # no terminal window (GUI app)
     disable_windowed_traceback=False,
     argv_emulation=True,  # dropped files passed as argv on macOS
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=icon_path,  # .icns for macOS .app (create with ./build_icon.sh)
+    icon=icon_path,
 )
 
-# macOS .app bundle (built when console=False on macOS)
-# Result: dist/VocalSeparator.app
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name="VocalSeparator",
+)
+
+# macOS: wrap COLLECT output in .app bundle so we get dist/VocalSeparator.app (and icon applied).
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="VocalSeparator.app",
+        icon=icon_path,
+        bundle_identifier=None,
+        info_plist={"CFBundleIconFile": "icon"},
+    )

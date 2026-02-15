@@ -341,7 +341,11 @@ def separate(input_file: Path, output_dir: Path):
     if not check_api_key():
         sys.exit(1)
 
-    success = separate_file(input_file, output_dir)
+    try:
+        success = separate_file(input_file, output_dir)
+    except AuthenticationError as e:
+        console.print(f"\n[red]❌ {e}[/red]\n")
+        sys.exit(1)
 
     if success:
         console.print(f"\n[bold green]🎉 Done![/bold green] Files saved to: {output_dir}\n")

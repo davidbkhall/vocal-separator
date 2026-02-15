@@ -18,7 +18,11 @@ else
 fi
 
 echo "Building VocalSeparator.app with PyInstaller..."
-pyinstaller VocalSeparator.spec
+if command -v pyinstaller >/dev/null 2>&1; then
+  pyinstaller VocalSeparator.spec
+else
+  python3 -m PyInstaller VocalSeparator.spec
+fi
 
 # PyInstaller one-file on macOS often doesn't apply the icon; copy it into the bundle and set Info.plist
 APP="$SCRIPT_DIR/dist/VocalSeparator.app"
@@ -30,6 +34,8 @@ if [[ -f "assets/icon.icns" && -d "$APP" && -f "$PLIST" ]]; then
   # Tell the .app to use this icon (CFBundleIconFile = filename without .icns)
   /usr/libexec/PlistBuddy -c "Delete :CFBundleIconFile" "$PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string icon" "$PLIST"
+  # Force Finder to refresh the bundle's icon
+  touch "$APP"
   echo "Applied custom icon to .app bundle."
 fi
 
