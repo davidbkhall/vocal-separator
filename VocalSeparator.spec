@@ -112,5 +112,9 @@ if sys.platform == "darwin":
         name="VocalSeparator.app",
         icon=icon_path,
         bundle_identifier=None,
-        info_plist={"CFBundleIconFile": "icon"},
+        info_plist={
+            "CFBundleIconFile": "icon",
+            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleVersion": "1.0.0",
+        },
     )

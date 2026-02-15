@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "audioshake-separator"
+name = "vocal-separator"
 version = "1.0.0"
 description = "Extract vocals from audio using Audioshake API"
 requires-python = ">=3.10"

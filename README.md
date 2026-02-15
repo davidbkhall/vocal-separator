@@ -17,7 +17,7 @@ Extract vocals from audio using the [Audioshake API](https://developer.audioshak
 ## Setup
 
 ```bash
-cd audioshake-separator
+cd vocal-separator
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -94,7 +94,7 @@ Per input file you get (names follow Audioshake task output):
 ## Project structure
 
 ```
-audioshake-separator/
+vocal-separator/
 ├── src/audioshake_separator/   # Installable package
 │   ├── separator.py            # Core API + single-file CLI
 │   ├── batch.py                # Batch CLI
