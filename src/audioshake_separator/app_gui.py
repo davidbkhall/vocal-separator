@@ -364,7 +364,7 @@ class VocalSeparatorApp:
         self.notebook.add(sett, text="Settings")
 
         row = 0
-        ttk.Label(sett, text="API key").grid(row=row, column=0, sticky=tk.W)
+        ttk.Label(sett, text="Audioshake API key").grid(row=row, column=0, sticky=tk.W)
         self.api_key_var = tk.StringVar(value=self.config.get("api_key", ""))
         ttk.Entry(sett, textvariable=self.api_key_var, show="•", width=50).grid(
             row=row, column=1, sticky=(tk.W, tk.E), padx=(8, 0), pady=4
