@@ -7,7 +7,7 @@ Usage:
   pip install -e .   # so vocal_separator is importable
   python setup.py py2app
 
-Result: dist/VocalSeparator.app
+Result: dist/Vocal Separator.app
 
 For development (alias mode, uses your env; faster):
   python setup.py py2app -A
@@ -47,7 +47,7 @@ OPTIONS = {
     "includes": ["dotenv", "rich"],
     "iconfile": _iconfile,
     "plist": {
-        "CFBundleName": "VocalSeparator",
+        "CFBundleName": "Vocal Separator",
         "CFBundleDisplayName": "Vocal Separator",
         "CFBundleIdentifier": "com.audioshake.vocalseparator",
         "CFBundleVersion": VERSION,
@@ -77,7 +77,7 @@ OPTIONS = {
 }
 
 setup(
-    name="VocalSeparator",
+    name="Vocal Separator",
     app=APP,
     options={"py2app": OPTIONS},
     setup_requires=["py2app"],

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the self-contained VocalSeparator.app (icon + PyInstaller).
+# Build the self-contained Vocal Separator.app (icon + PyInstaller).
 # Run from project root: ./scripts/build_app.sh
 # Requires: venv with requirements.txt + pyinstaller installed.
 
@@ -24,7 +24,7 @@ else
   echo "Note: assets/icon.png not found; .app will use default icon. Add icon.png and run ./scripts/build_icon.sh for a custom icon."
 fi
 
-echo "Building VocalSeparator.app with PyInstaller..."
+echo "Building Vocal Separator.app with PyInstaller..."
 if command -v pyinstaller >/dev/null 2>&1; then
   pyinstaller --noconfirm VocalSeparator.spec
 else
@@ -32,7 +32,7 @@ else
 fi
 
 # PyInstaller one-file on macOS often doesn't apply the icon; copy it into the bundle and set Info.plist
-APP="$REPO_ROOT/dist/VocalSeparator.app"
+APP="$REPO_ROOT/dist/Vocal Separator.app"
 RESOURCES="$APP/Contents/Resources"
 PLIST="$APP/Contents/Info.plist"
 if [[ -f "assets/icon.icns" && -d "$APP" && -f "$PLIST" ]]; then
@@ -48,5 +48,5 @@ fi
 if [[ -d "$APP" ]] && [[ ! -f "assets/icon.icns" ]]; then
   echo "Note: Add assets/icon.png and run ./scripts/build_icon.sh, then rebuild, for a custom icon."
 fi
-echo "Done. App: dist/VocalSeparator.app"
-echo "If the app icon does not appear in Finder, run: touch dist/VocalSeparator.app"
+echo "Done. App: dist/Vocal Separator.app"
+echo "If the app icon does not appear in Finder, run: touch \"dist/Vocal Separator.app\""

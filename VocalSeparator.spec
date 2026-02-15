@@ -1,6 +1,6 @@
 # PyInstaller spec for Vocal Separator macOS .app
 # Build: pyinstaller VocalSeparator.spec
-# Output: dist/VocalSeparator.app
+# Output: dist/Vocal Separator.app
 # Icon: built from assets/icon.png automatically when missing
 
 # -*- mode: python ; coding: utf-8 -*-
@@ -84,7 +84,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="VocalSeparator",
+    name="Vocal Separator",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -107,14 +107,14 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="VocalSeparator",
+    name="Vocal Separator",
 )
 
-# macOS: wrap COLLECT output in .app bundle so we get dist/VocalSeparator.app (and icon applied).
+# macOS: wrap COLLECT output in .app bundle so we get dist/Vocal Separator.app (and icon applied).
 if sys.platform == "darwin":
     app = BUNDLE(
         coll,
-        name="VocalSeparator.app",
+        name="Vocal Separator.app",
         icon=icon_path,
         bundle_identifier=None,
         info_plist={

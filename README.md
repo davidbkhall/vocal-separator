@@ -55,23 +55,25 @@ Uses your project venv and `.env`:
 
 ```bash
 ./scripts/create_app.sh
-# Then double-click VocalSeparator.app from the project directory
+# Then double-click Vocal Separator.app from the project directory
 ```
+
+The script creates `Vocal Separator.app` at the project root. That bundle is generated (not tracked in git; `*.app/` is in `.gitignore`) and can be removed anytime; run `./scripts/create_app.sh` again to recreate it.
 
 Open the app → **Settings** to set your API key and options. **Main** tab: add files or folder, choose output dir, click **Start**.
 
 ### macOS: standalone .app (shareable bundle)
 
-Build a self-contained `VocalSeparator.app` with Python and dependencies inside (no need for a venv on the target machine):
+Build a self-contained `Vocal Separator.app` with Python and dependencies inside (no need for a venv on the target machine):
 
 ```bash
 pip install pyinstaller
 ./scripts/build_app.sh
 ```
 
-Output: **`dist/VocalSeparator.app`**. Move to Applications or share. On first run, settings and API key are stored under `~/Library/Application Support/VocalSeparator/`.
+Output: **`dist/Vocal Separator.app`**. Move to Applications or share. On first run, settings and API key are stored under `~/Library/Application Support/VocalSeparator/`.
 
-- **Icon:** `./scripts/build_app.sh` builds `assets/icon.icns` from `assets/icon.png` and applies it. If the icon doesn’t appear, run `touch dist/VocalSeparator.app` or restart Finder.
+- **Icon:** `./scripts/build_app.sh` builds `assets/icon.icns` from `assets/icon.png` and applies it. If the icon doesn’t appear, run `touch "dist/Vocal Separator.app"` or restart Finder.
 - **If `scripts/build_icon.sh` fails:** create `assets/icon.icns` elsewhere (e.g. [cloudconvert.com/png-to-icns](https://cloudconvert.com/png-to-icns)) and run `./scripts/build_app.sh` again.
 - **tkinter:** If you use Homebrew Python and get “No module named '_tkinter'”, run `brew install python-tk@3.14` (or match your Python version). The .app build must use a Python that has tkinter so Tcl/Tk gets bundled; otherwise the frozen app will show “No module named 'tkinter'”.
 
@@ -123,7 +125,7 @@ vocal-separator/
 │   └── create_app.sh           # Create dev .app using project venv
 ├── pyproject.toml              # Package config and script entry points
 ├── run_gui.py                  # Launcher for PyInstaller bundle
-├── VocalSeparator.spec         # PyInstaller spec
+├── VocalSeparator.spec          # PyInstaller spec (output: Vocal Separator.app)
 ├── setup.py                    # py2app (alternative macOS build)
 ├── assets/
 │   └── icon.png                # App icon source
@@ -152,8 +154,8 @@ That value is used by the package (`vocal_separator.__version__`), the PyInstall
 
 | Issue | Fix |
 |-------|-----|
-| **VocalSeparator.app does nothing when opened** | Run the binary from Terminal to see the error: `./dist/VocalSeparator.app/Contents/MacOS/VocalSeparator` (or `./dist/VocalSeparator/VocalSeparator` if no .app). Check `~/Library/Application Support/VocalSeparator/launch_error.log` for the traceback. If it says “No module named 'tkinter'”, rebuild with a Python that has tkinter: `brew install python-tk@3.11` (or your version), recreate the venv with that Python, then `./scripts/build_app.sh` again. |
-| **App icon doesn’t appear** | Ensure `assets/icon.png` exists before building; `./scripts/build_app.sh` creates `icon.icns` and copies it into the .app. If the icon still doesn’t show, run `touch dist/VocalSeparator.app` or log out and back in to refresh Finder. |
+| **Vocal Separator.app does nothing when opened** | Run the binary from Terminal to see the error: `./dist/Vocal\ Separator.app/Contents/MacOS/Vocal\ Separator`. Check `~/Library/Application Support/VocalSeparator/launch_error.log` for the traceback. If it says “No module named 'tkinter'”, rebuild with a Python that has tkinter: `brew install python-tk@3.11` (or your version), recreate the venv with that Python, then `./scripts/build_app.sh` again. |
+| **App icon doesn’t appear** | Ensure `assets/icon.png` exists before building; `./scripts/build_app.sh` creates `icon.icns` and copies it into the .app. If the icon still doesn’t show, run `touch "dist/Vocal Separator.app"` or log out and back in to refresh Finder. |
 | **AUDIOSHAKE_API_KEY not found** | Create `.env` from `.env.example`, add your key. |
 | **Upload failed / 401** | Check API key and quota; invalid/expired key shows a clear auth error. |
 | **Drag-and-drop app doesn’t work** | Run `./scripts/create_app.sh` from project root; run `pip install -e .` then `python -m vocal_separator.droplet <file>` to see errors. |
