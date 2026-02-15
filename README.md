@@ -1,4 +1,4 @@
-# Audioshake Voice Separator
+# Vocal Separator
 
 Extract vocals from audio using the [Audioshake API](https://developer.audioshake.ai/). CLI, batch processing, and a macOS GUI/drag-and-drop app.
 
@@ -34,6 +34,7 @@ This installs the package in editable mode and registers the `vocal-separate`, `
 ```bash
 vocal-separate song.mp3
 vocal-separate song.wav -o ./vocals
+vocal-separate track.flac -o ./stems -m instrumental -f mp3 --variant high_quality --residual
 ```
 
 Or: `python -m vocal_separator.separator song.mp3`
@@ -42,7 +43,8 @@ Or: `python -m vocal_separator.separator song.mp3`
 
 ```bash
 vocal-batch ./music
-vocal-batch ./music -r -o ./vocals -w 4   # recursive, 4 workers
+vocal-batch ./music -r -o ./vocals -w 4
+vocal-batch ./music -m instrumental -f mp3 --variant high_quality
 ```
 
 Or: `python -m vocal_separator.batch ./music`
@@ -77,19 +79,34 @@ Alternative (py2app): Python 3.12, setuptools &lt;69, then `pip install -e . py2
 
 ## CLI options
 
-| Command               | Options |
-|-----------------------|---------|
-| `vocal-separate` | `input` (file), `-o/--output` (default: `./output`) |
-| `vocal-batch`    | `input` (dir or files), `-o/--output`, `-r/--recursive`, `-w/--workers` (default: 2) |
+Options match the Audioshake API (same as in the GUI Settings). Run `vocal-separate --help` or `vocal-batch --help` for details.
+
+| Command | Option | Description |
+|---------|--------|-------------|
+| **vocal-separate** | `input` | Input audio file (required) |
+| | `-o`, `--output` | Output directory (default: `./output`) |
+| | `-m`, `--model` | Target model: vocals, instrumental, drums, etc. (default: vocals) |
+| | `-f`, `--format` | Output format: wav, mp3, flac, aiff (default: wav) |
+| | `--variant` | Optional variant, e.g. high_quality |
+| | `--residual` | Include residual stem when supported |
+| **vocal-batch** | `input` | Directory or list of audio files (required) |
+| | `-o`, `--output` | Output directory (default: `./output`) |
+| | `-r`, `--recursive` | Search subdirectories for audio files |
+| | `-w`, `--workers` | Parallel jobs (default: 2) |
+| | `-m`, `--model` | Target model (default: vocals) |
+| | `-f`, `--format` | Output format (default: wav) |
+| | `--variant` | Optional variant |
+| | `--residual` | Include residual stem when supported |
+
+**Example (single file with options):**
+
+```bash
+vocal-separate song.mp3 -o ./vocals -m vocals -f wav --variant high_quality
+```
 
 ## Output
 
-Per input file you get (names follow Audioshake task output):
-
-- `{basename}_vocals.wav`
-- `{basename}_instrumental.wav`
-
-(Exact stems depend on the task target; see Settings in the GUI or [Tasks API](https://developer.audioshake.ai/).)
+Per input file you get stems named by the task target (e.g. `{basename}_vocals.wav`, `{basename}_instrumental.wav`). The file extension matches the chosen output format (wav, mp3, flac, or aiff). See the [Audioshake Tasks API](https://developer.audioshake.ai/) for target and variant details.
 
 ## Project structure
 
@@ -103,7 +120,8 @@ vocal-separator/
 ├── scripts/
 │   ├── build_app.sh            # Build standalone .app (PyInstaller)
 │   ├── build_icon.sh           # Build icon.icns from assets/icon.png
-│   └── create_app.sh          # Create dev .app using project venv
+│   └── create_app.sh           # Create dev .app using project venv
+├── pyproject.toml              # Package config and script entry points
 ├── run_gui.py                  # Launcher for PyInstaller bundle
 ├── VocalSeparator.spec         # PyInstaller spec
 ├── setup.py                    # py2app (alternative macOS build)

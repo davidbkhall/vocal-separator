@@ -334,7 +334,14 @@ def separate_file(
     return len(saved) > 0
 
 
-def separate(input_file: Path, output_dir: Path):
+def separate(
+    input_file: Path,
+    output_dir: Path,
+    model: str = "vocals",
+    output_format: str = "wav",
+    variant: str | None = None,
+    residual: bool = False,
+):
     """Main separation workflow for single file."""
     console.print("\n[bold cyan]🎧 Audioshake Voice Separator[/bold cyan]\n")
 
@@ -342,7 +349,14 @@ def separate(input_file: Path, output_dir: Path):
         sys.exit(1)
 
     try:
-        success = separate_file(input_file, output_dir)
+        success = separate_file(
+            input_file,
+            output_dir,
+            model=model,
+            output_format=output_format,
+            variant=variant,
+            residual=residual,
+        )
     except AuthenticationError as e:
         console.print(f"\n[red]❌ {e}[/red]\n")
         sys.exit(1)
@@ -362,7 +376,8 @@ def main():
 Examples:
   %(prog)s song.mp3
   %(prog)s song.wav -o ./vocals
-  %(prog)s podcast.mp3 --output ~/Desktop/separated
+  %(prog)s podcast.mp3 -m instrumental -f mp3 --variant high_quality
+  %(prog)s track.flac -o ./stems --residual
 
 For batch processing, use: vocal-batch <directory>
         """,
@@ -382,8 +397,45 @@ For batch processing, use: vocal-batch <directory>
         help="Output directory (default: ./output)",
     )
 
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        default="vocals",
+        help="Target model (e.g. vocals, instrumental, drums) (default: vocals)",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        default="wav",
+        choices=["wav", "mp3", "flac", "aiff"],
+        help="Output format (default: wav)",
+    )
+
+    parser.add_argument(
+        "--variant",
+        type=str,
+        default=None,
+        help="Optional variant (e.g. high_quality for vocals/instrumental)",
+    )
+
+    parser.add_argument(
+        "--residual",
+        action="store_true",
+        help="Include residual stem when supported",
+    )
+
     args = parser.parse_args()
-    separate(args.input, args.output)
+    separate(
+        args.input,
+        args.output,
+        model=args.model,
+        output_format=args.format,
+        variant=args.variant,
+        residual=args.residual,
+    )
 
 
 if __name__ == "__main__":
