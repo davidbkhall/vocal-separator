@@ -36,7 +36,7 @@ audioshake-separate song.mp3
 audioshake-separate song.wav -o ./vocals
 ```
 
-Or: `python -m audioshake_separator.separator song.mp3`
+Or: `python -m vocal_separator.separator song.mp3`
 
 ### CLI — batch
 
@@ -45,7 +45,7 @@ audioshake-batch ./music
 audioshake-batch ./music -r -o ./vocals -w 4   # recursive, 4 workers
 ```
 
-Or: `python -m audioshake_separator.batch ./music`
+Or: `python -m vocal_separator.batch ./music`
 
 ### macOS: quick GUI / drag-and-drop
 
@@ -95,7 +95,7 @@ Per input file you get (names follow Audioshake task output):
 
 ```
 vocal-separator/
-├── src/audioshake_separator/   # Installable package
+├── src/vocal_separator/   # Installable package
 │   ├── separator.py            # Core API + single-file CLI
 │   ├── batch.py                # Batch CLI
 │   ├── app_gui.py              # GUI (used by .app bundle)
@@ -130,5 +130,5 @@ Then `git commit` runs ruff + mypy. Manual run: `pre-commit run --all-files`.
 | **App icon doesn’t appear** | Ensure `assets/icon.png` exists before building; `./scripts/build_app.sh` creates `icon.icns` and copies it into the .app. If the icon still doesn’t show, run `touch dist/VocalSeparator.app` or log out and back in to refresh Finder. |
 | **AUDIOSHAKE_API_KEY not found** | Create `.env` from `.env.example`, add your key. |
 | **Upload failed / 401** | Check API key and quota; invalid/expired key shows a clear auth error. |
-| **Drag-and-drop app doesn’t work** | Run `./scripts/create_app.sh` from project root; run `pip install -e .` then `python -m audioshake_separator.droplet <file>` to see errors. |
+| **Drag-and-drop app doesn’t work** | Run `./scripts/create_app.sh` from project root; run `pip install -e .` then `python -m vocal_separator.droplet <file>` to see errors. |
 | **No module named '_tkinter'** | Homebrew: `brew install python-tk@3.14` (or your Python version). |

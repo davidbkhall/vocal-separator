@@ -81,7 +81,7 @@ cd "$REPO_ROOT"
 if [ -d "venv" ]; then
     source venv/bin/activate
 fi
-exec python3 -m audioshake_separator.app_gui "\$@"
+exec python3 -m vocal_separator.app_gui "\$@"
 EOF
 
 chmod +x "$MACOS_DIR/launcher"

@@ -4,7 +4,7 @@ Build a standalone macOS .app bundle that includes Python and all dependencies.
 
 Usage:
   pip install py2app
-  pip install -e .   # so audioshake_separator is importable
+  pip install -e .   # so vocal_separator is importable
   python setup.py py2app
 
 Result: dist/VocalSeparator.app
@@ -37,7 +37,7 @@ OPTIONS = {
         "certifi",
         "charset_normalizer",
         "idna",
-        "audioshake_separator",
+        "vocal_separator",
     ],
     "includes": ["dotenv", "rich"],
     "iconfile": _iconfile,

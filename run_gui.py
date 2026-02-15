@@ -25,7 +25,7 @@ def _log_launch_error() -> None:
 
 if __name__ == "__main__":
     try:
-        from audioshake_separator.app_gui import main
+        from vocal_separator.app_gui import main
 
         main()
     except Exception:

@@ -45,7 +45,7 @@ jobs:
 
       - name: Run type checker (mypy)
         run: |
-          mypy src/audioshake_separator --ignore-missing-imports
+          mypy src/vocal_separator --ignore-missing-imports
 
       - name: Run tests with coverage
         run: |
