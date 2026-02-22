@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vocal Separator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Vocal Separator</h1>
+      <p class="tagline">Extract vocals (or stems) from audio in your browser using the <a href="https://developer.audioshake.ai/" target="_blank" rel="noopener">Audioshake API</a>.</p>
+    </header>
+
+    <main>
+      <section class="card api-key-card">
+        <h2>1. Audioshake API key</h2>
+        <p>Get a key from <a href="https://www.audioshake.ai" target="_blank" rel="noopener">audioshake.ai</a> (dashboard/settings). It is sent only to Audioshake; this page does not store it.</p>
+        <input type="password" id="apiKey" placeholder="Paste your API key" autocomplete="off" />
+      </section>
+
+      <section class="card options-card">
+        <h2>2. Options</h2>
+        <div class="options-grid">
+          <label>
+            <span>Model</span>
+            <select id="model">
+              <option value="vocals">vocals</option>
+              <option value="vocals_lead">vocals_lead</option>
+              <option value="vocals_backing">vocals_backing</option>
+              <option value="instrumental">instrumental</option>
+              <option value="drums">drums</option>
+              <option value="bass">bass</option>
+              <option value="guitar">guitar</option>
+              <option value="guitar_electric">guitar_electric</option>
+              <option value="guitar_acoustic">guitar_acoustic</option>
+              <option value="piano">piano</option>
+              <option value="keys">keys</option>
+              <option value="strings">strings</option>
+              <option value="wind">wind</option>
+              <option value="other">other</option>
+              <option value="dialogue">dialogue</option>
+              <option value="effects">effects</option>
+              <option value="music_fx">music_fx</option>
+              <option value="transcription">transcription</option>
+            </select>
+          </label>
+          <label>
+            <span>Format</span>
+            <select id="format">
+              <option value="wav">wav</option>
+              <option value="mp3">mp3</option>
+              <option value="flac">flac</option>
+              <option value="aiff">aiff</option>
+            </select>
+          </label>
+          <label>
+            <span>Variant</span>
+            <select id="variant">
+              <option value="">—</option>
+              <option value="high_quality">high_quality</option>
+              <option value="two_speaker">two_speaker</option>
+              <option value="n_speaker">n_speaker</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card upload-card">
+        <h2>3. Audio file</h2>
+        <div id="dropZone" class="drop-zone">
+          <input type="file" id="fileInput" accept=".mp3,.wav,.flac,.m4a,.ogg,.aac,.wma" hidden />
+          <p id="dropLabel">Drop a file here or click to choose</p>
+          <p id="fileName" class="file-name"></p>
+        </div>
+      </section>
+
+      <section class="card actions-card">
+        <button type="button" id="startBtn" class="btn btn-primary" disabled>Separate</button>
+        <button type="button" id="cancelBtn" class="btn btn-secondary" hidden>Cancel</button>
+      </section>
+
+      <section id="progressSection" class="card progress-card" hidden>
+        <h2>Status</h2>
+        <p id="progressText" class="progress-text"></p>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      </section>
+
+      <section id="resultSection" class="card result-card" hidden>
+        <h2>Download</h2>
+        <p id="resultIntro"></p>
+        <ul id="resultList" class="result-list"></ul>
+        <p id="corsNote" class="cors-note" hidden>
+          If downloads fail (e.g. CORS), open each link in a new tab and use the browser’s save option, or use the <a href="https://github.com/dhall/vocal-separator#usage">desktop / CLI app</a>.
+        </p>
+      </section>
+
+      <section id="errorSection" class="card error-card" hidden>
+        <h2>Error</h2>
+        <p id="errorText" class="error-text"></p>
+      </section>
+    </main>
+
+    <footer>
+      <p>Part of <a id="repoLink" href="https://github.com/dhall/vocal-separator">vocal-separator</a>. CLI and desktop app available in the repo.</p>
+    </footer>
+  </div>
+  <script>
+    (function () {
+      if (location.hostname.endsWith(".github.io") && location.pathname.includes("vocal-separator")) {
+        var user = location.hostname.split(".")[0];
+        var path = location.pathname.replace(/\/$/, "").replace(/^\//, "") || "vocal-separator";
+        document.getElementById("repoLink").href = "https://github.com/" + user + "/" + path.split("/")[0];
+      }
+    })();
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

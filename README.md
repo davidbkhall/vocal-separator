@@ -7,6 +7,7 @@ Extract vocals from audio using the [Audioshake API](https://developer.audioshak
 - Extract vocals (and instrumentals) from MP3, WAV, FLAC, M4A, OGG, AAC, WMA
 - Batch process folders with optional parallel workers
 - macOS: GUI app or drag-and-drop droplet; optional standalone `.app` bundle
+- **Browser:** run in the browser and host on GitHub Pages (static `docs/` app)
 
 ## Requirements
 
@@ -79,6 +80,18 @@ Output: **`dist/Vocal Separator.app`**. Move to Applications or share. On first 
 
 Alternative (py2app): Python 3.12, setuptools &lt;69, then `pip install -e . py2app` and `python setup.py py2app`.
 
+### Browser (GitHub Pages)
+
+A static web app in **`docs/`** lets you run Vocal Separator in the browser and host it on GitHub Pages.
+
+1. **Use locally:** open `docs/index.html` in a browser (or run a local server, e.g. `python3 -m http.server 8000` and visit `http://localhost:8000/docs/`).
+2. **Host on GitHub Pages:**
+   - In the repo: **Settings → Pages → Build and deployment → Source:** “Deploy from a branch”.
+   - **Branch:** `main`, **Folder:** `/docs`.
+   - Save. The site will be at `https://<your-username>.github.io/vocal-separator/`.
+
+In the browser you paste your Audioshake API key (it is only sent to Audioshake; the page does not store it), pick options, upload an audio file, then get links to download the separated stems. If you see CORS errors, the API may not allow browser requests from your origin; use the desktop or CLI app instead.
+
 ## CLI options
 
 Options match the Audioshake API (same as in the GUI Settings). Run `vocal-separate --help` or `vocal-batch --help` for details.
@@ -114,6 +127,7 @@ Per input file you get stems named by the task target (e.g. `{basename}_vocals.w
 
 ```
 vocal-separator/
+├── docs/                  # Browser app for GitHub Pages (index.html + assets)
 ├── src/vocal_separator/   # Installable package
 │   ├── separator.py            # Core API + single-file CLI
 │   ├── batch.py                # Batch CLI
